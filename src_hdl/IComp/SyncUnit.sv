@@ -379,8 +379,8 @@ module SyncUnit
 	end
 
 	logic					Stop_Send_Init;
-	assign Stop_Send_Init	= (  ~R_Send_Data2 & ( Run_NoShared_A & Run_NoShared_B ) ) |
-								( R_Send_Data & ~( Run_NoShared_A & Run_NoShared_B ) );
+	assign Stop_Send_Init	= (  ~R_Send_Data & ~( Run_NoShared_A ^ Run_NoShared_B ) );// |
+//								~( R_Send_Data & ~( Run_NoShared_A & Run_NoShared_B ) );
 
 	logic					R_Send_Data2;
 	always_ff @( posedge clock ) begin
@@ -390,8 +390,21 @@ module SyncUnit
 		else if ( is_Fired_Rls ) begin
 			R_Send_Data2	<= 1'b0;
 		end
-		else if ( R_Send_Data & ( Run_NoShared_A & Run_NoShared_B ) ) begin
+		else if ( R_Send_Data & ~Stop_Send_Init ) begin
 			R_Send_Data2	<= 1'b1;
+		end
+	end
+
+	logic					R_Send_Data3;
+	always_ff @( posedge clock ) begin
+		if ( reset ) begin
+			R_Send_Data3	<= 1'b0;
+		end
+		else if ( is_Fired_Rls ) begin
+			R_Send_Data3	<= 1'b0;
+		end
+		else if ( R_Send_Data2 & O_FTk_A.v & O_FTk_B.v ) begin
+			R_Send_Data3	<= 1'b1;
 		end
 	end
 
@@ -431,6 +444,7 @@ module SyncUnit
 								( Ready_Rls_A ) ?	Index_B :
 								( Send_Null_A ) ?				Index_B :
 								( Send_SNZero_A ) ?				Index_B :
+								( Run_NoShared_A ) ?			R_Count :
 								( Send_Data_A ) ?				FTk_A.i :
 								( R_IndexMismatch_A ) ?			FTk_A.i :
 																'0;
@@ -472,9 +486,10 @@ module SyncUnit
 								( R_IndexMismatch_B ) ?			FTk_B.r :
 																'0;
 	assign O_FTk_B.i        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_B ) ?	Index_A :
+								( Ready_Rls_B ) ?				Index_A :
 								( Send_Null_B ) ?				Index_A :
 								( Send_SNZero_B ) ?				Index_A :
+								( Run_NoShared_B ) ?			R_Count :
 								( Send_Data_B ) ?				FTk_B.i :
 								( R_IndexMismatch_B ) ?			FTk_B.i :
 																'0;
@@ -505,11 +520,11 @@ module SyncUnit
 		if ( reset ) begin
 			R_Nack_A		<= 1'b0;
 		end
-		else if ( Nack_A | ( Num_A == 2'h2 ) ) begin
-			R_Nack_A		<= 1'b1;
-		end
 		else if ( Valid_B & ( Num_A == 2'h0 ) ) begin
 			R_Nack_A		<= 1'b0;
+		end
+		else if ( Nack_A | ( Num_A == 2'h2 ) ) begin
+			R_Nack_A		<= 1'b1;
 		end
 	end
 
@@ -517,11 +532,11 @@ module SyncUnit
 		if ( reset ) begin
 			R_Nack_B		<= 1'b0;
 		end
-		else if ( Nack_B | ( Num_B == 2'h2 ) ) begin
-			R_Nack_B		<= 1'b1;
-		end
 		else if ( Valid_A & ( Num_B == 2'h0 ) ) begin
 			R_Nack_B		<= 1'b0;
+		end
+		else if ( Nack_B | ( Num_B == 2'h2 ) ) begin
+			R_Nack_B		<= 1'b1;
 		end
 	end
 
@@ -635,9 +650,22 @@ module SyncUnit
 	assign Validation_A		= W_FTk_A.v;
 	assign Validation_B		= W_FTk_B.v;
 
+	logic	[7:0]			R_Count;
+	always_ff @( posedge clock ) begin
+		if ( reset ) begin
+			R_Count			<= '0;
+		end
+		else if ( is_Fired_Rls ) begin
+			R_Count			<= '0;
+		end
+		else if ( ( ( Run_NoShared_A  ^ Run_NoShared_B ) ) & R_Send_Data3 & O_FTk_A.v & O_FTk_B.v )  begin
+			R_Count			<= R_Count + 1'b1;
+		end
+	end
+
 	//	 Index
-	assign Index_A			= ( Run_NoShared_A ) ? '0 : W_FTk_A.i;
-	assign Index_B			= ( Run_NoShared_B ) ? '0 : W_FTk_B.i;
+	assign Index_A			= ( Run_NoShared_A & Run_NoShared_B ) ? '0 : ( Run_NoShared_A & ~Run_NoShared_B ) ? R_Count : W_FTk_A.i;
+	assign Index_B			= ( Run_NoShared_B & Run_NoShared_A ) ? '0 : ( Run_NoShared_B & ~Run_NoShared_A ) ? R_Count : W_FTk_B.i;
 
 	//	 Mismatch Detection
 	assign IndexMismatch_A	= ( Index_A > Index_B ) & Validation_A & Validation_B & ReadyOp;

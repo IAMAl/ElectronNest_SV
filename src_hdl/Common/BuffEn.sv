@@ -19,7 +19,7 @@ module BuffEn
 	import	pkg_en::FTk_t;
 	import	pkg_en::BTk_t;
 #(
-	parameter int DEPTH_BUFF		= 8,
+	parameter int DEPTH_BUFF		= 16,
 	parameter int THRESHOLD			= 4,
 	parameter type TYPE_FWRD		= FTk_t
 )(

@@ -22,7 +22,7 @@ module PE
 	parameter int NUM_LINK			= 5,
 	parameter int NUM_CHANNEL		= 1,
 	parameter int WIDTH_LENGTH		= 10,
-	parameter int DEPTH_FIFO		= 12,
+	parameter int DEPTH_FIFO		= 16,
 	parameter int WIDTH_OPCODE		= 8,
 	parameter int WIDTH_CONSTANT	= 8,
 	parameter int NUM_WORKER		= 4
@@ -63,22 +63,21 @@ module PE
 	//// LE <-> ALU-In												////
 	FTk_fa3_t					F_ALU_FTk;
 	BTk_fa3_t					F_ALU_BTk;
-	FTk_fa1_t					B_ALU_FTk;
-	BTk_fa1_t					B_ALU_BTk;
+	FTk_a1f_t					B_ALU_FTk;
+	BTk_a1f_t					B_ALU_BTk;
 
 
 	//// ALU-In <-> ALU												////
-	FTk_a1_t					FA_FTk_A;
-	BTk_a1_t					FA_BTk_A;
-	FTk_a1_t					FA_FTk_B;
-	BTk_a1_t					FA_BTk_B;
-	FTk_a1_t					FA_FTk_C;
-	BTk_a1_t					FA_BTk_C;
+	FTk_ac_t					FA_FTk_A;
+	BTk_ac_t					FA_BTk_A;
+	FTk_ac_t					FA_FTk_B;
+	BTk_ac_t					FA_BTk_B;
+	FTk_ac_t					FA_FTk_C;
+	BTk_ac_t					FA_BTk_C;
 
 	//// ALU-In <-> LE												////
-	FTk_a1_t					BB_FTk;
-	BTk_a1_t					BB_BTk;
-
+	FTk_ac_t					BB_FTk;
+	BTk_ac_t					BB_BTk;
 
 
 	bit2_a_t					F_InC_A;
@@ -159,18 +158,18 @@ module PE
 		for ( genvar l = 0; l < NUM_LINK; ++l ) begin
 			for ( genvar c = 0; c < NUM_CHANNEL; ++c ) begin
 				//ALU-Fan-Out to Fan-In
-				assign A_LI_FTk[ l ][ NUM_LINK+NUM_ALU*0+a][ c ] = B_ALU_FTk[ 2*a+0 ][ NUM_CHANNEL*l+c ];
-				assign B_ALU_BTk[ 2*a+0 ][ NUM_CHANNEL*l+c ] = A_LI_BTk[ l ][ NUM_LINK+NUM_ALU*0+a ][ c ];
+				assign A_LI_FTk[ l ][ NUM_LINK+a ][ c ] = B_ALU_FTk[ a ][ NUM_CHANNEL*l+c ];
+				assign B_ALU_BTk[ a ][ NUM_CHANNEL*l+c ] = A_LI_BTk[ l ][ NUM_LINK+a ][ c ];
 
 				//Fan-Out to ALU-Fan-In
-				assign F_ALU_FTk[ 2*a+0 ][ NUM_CHANNEL*l+c ] = LO_A_FTk[ l ][ NUM_LINK+NUM_ALU*0+a ][ c ];
-				assign LO_A_BTk[ l ][ NUM_LINK+NUM_ALU*0+a ][ c ] = F_ALU_BTk[ 2*a+0 ][ NUM_CHANNEL*l+c ];
+				assign F_ALU_FTk[ 3*a+0 ][ NUM_CHANNEL*l+c ] = LO_A_FTk[ l ][ NUM_LINK+NUM_ALU*0+a ][ c ];
+				assign LO_A_BTk[ l ][ NUM_LINK+NUM_ALU*0+a ][ c ] = F_ALU_BTk[ 3*a+0 ][ NUM_CHANNEL*l+c ];
 
-				assign F_ALU_FTk[ 2*a+1 ][NUM_CHANNEL*l+c ] = LO_A_FTk[ l ][ NUM_LINK+NUM_ALU*1+a ][ c ];
-				assign LO_A_BTk[ l ][ NUM_LINK+NUM_ALU*1+a ][ c ] = F_ALU_BTk[ 2*a+1 ][ NUM_CHANNEL*l+c ];
+				assign F_ALU_FTk[ 3*a+1 ][ NUM_CHANNEL*l+c ] = LO_A_FTk[ l ][ NUM_LINK+NUM_ALU*1+a ][ c ];
+				assign LO_A_BTk[ l ][ NUM_LINK+NUM_ALU*1+a ][ c ] = F_ALU_BTk[ 3*a+1 ][ NUM_CHANNEL*l+c ];
 
-				assign F_ALU_FTk[ 2*a+2 ][NUM_CHANNEL*l+c ] = LO_A_FTk[ l ][ NUM_LINK+NUM_ALU*2+a ][ c ];
-				assign LO_A_BTk[ l ][ NUM_LINK+NUM_ALU*2+a ][ c ] = F_ALU_BTk[ 2*a+2 ][ NUM_CHANNEL*l+c ];
+				assign F_ALU_FTk[ 3*a+2 ][ NUM_CHANNEL*l+c ] = LO_A_FTk[ l ][ NUM_LINK+NUM_ALU*2+a ][ c ];
+				assign LO_A_BTk[ l ][ NUM_LINK+NUM_ALU*2+a ][ c ] = F_ALU_BTk[ 3*a+2 ][ NUM_CHANNEL*l+c ];
 			end
 		end
 	end
@@ -254,7 +253,7 @@ module PE
 			.NUM_CHANNEL(	1							),
 			.NUM_LINK( 		NUM_LINKC					),
 			.WIDTH_LENGTH(	10							),
-			.DEPTH_FIFO(	12							),
+			.DEPTH_FIFO(	DEPTH_FIFO					),
 			.TYPE_FTK(		FTk_1f_t					),
 			.TYPE_BTK(		BTk_1f_t					),
 			.TYPE_BITS(		bit_f1_t					),
@@ -286,8 +285,8 @@ module PE
 			.O_BTkB(		FA_BTk_B[ a ]				),
 			.I_FTkC(		FA_FTk_C[ a ]				),
 			.O_BTkC(		FA_BTk_C[ a ]				),
-			.O_FTk(			BB_FTk[ a ]					),
-			.I_BTk(			BB_BTk[ a ]					),
+			.O_FTk(			BB_FTk[ a ][0]				),
+			.I_BTk(			BB_BTk[ a ][0]				),
 			.O_InCA(		F_InC_A[ a ]				),
 			.O_InCB(		F_InC_B[ a ]				),
 			.O_InCC(		F_InC_C[ a ]				)

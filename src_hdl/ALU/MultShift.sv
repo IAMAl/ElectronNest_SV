@@ -234,8 +234,8 @@ module MultShift
 
 	`ifdef EXTEND
 	OutBuff #(
-		.SIZE_OUT_BUFF(		8							),
-		.PIPE_DEPTH(		8							)
+		.SIZE_OUT_BUFF(		DEPTH_FIFO					),
+		.PIPE_DEPTH(		DEPTH_FIFO					)
 	) OutBuff_MS
 	(
 		.clock(				clock						),

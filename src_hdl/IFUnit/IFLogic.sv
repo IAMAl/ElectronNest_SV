@@ -376,7 +376,7 @@ module IFLogic
 	//// Buffer														////
 	//	 Buffer for Data from External World
 	Buff #(
-		.DEPTH_FIFO(		24							),
+		.DEPTH_FIFO(		DEPTH_FIFO					),
 		.THRESHOLD(			6							),
 		.PASS(				0							),
 		.BUFF(				1							)
@@ -404,7 +404,7 @@ module IFLogic
 							( FSM_FrontEnd == IFLOGIC_ST_RETIME_RCFG ) ?													'0 :
 																															I_FTk;
 	Buff #(
-		.DEPTH_FIFO(		24							),
+		.DEPTH_FIFO(		DEPTH_FIFO					),
 		.THRESHOLD(			6							),
 		.PASS(				0							),
 		.BUFF(				1							)

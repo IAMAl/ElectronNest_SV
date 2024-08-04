@@ -22,7 +22,7 @@ module RE
 	parameter int NUM_LINK			= 5,
 	parameter int NUM_CHANNEL		= 1,
 	parameter int WIDTH_LENGTH		= 10,
-	parameter int DEPTH_FIFO		= 12,
+	parameter int DEPTH_FIFO		= 16,
 	parameter int WIDTH_UNIT		= 8,
 	parameter int NUM_MEMUNIT		= 4,
 	parameter int SIZE_CRAM			= 256,

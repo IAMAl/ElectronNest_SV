@@ -63,7 +63,7 @@ import	pkg_extend_index::*;
 	parameter int DEPTH_FIFO					= 16;
 
 	// Depth of FIFO used in LinkOut
-	parameter int DEPTH_L_FIFO					= 6;
+	parameter int DEPTH_L_FIFO					= 8;
 
 
 	//// Compute Element											////
@@ -261,7 +261,8 @@ import	pkg_extend_index::*;
 
 	//// Bundles for Compute Element (PE)					 		////
 	//	 Forward Token
-	typedef FTk_t		[NUM_ALU-1:0]		FTk_a1_t;
+	typedef FTk_t		[NUM_ALU-1:0]		FTk_a_t;
+	typedef FTk_a_t		[NUM_CHANNEL-1:0]	FTk_ac_t;
 	typedef FTk_c_t		[NUM_A-1:0]			FTk_cfa1_t;
 	typedef FTk_c_t		[NUM_A2-1:0]		FTk_cfa2_t;
 	typedef FTk_cfa1_t	[NUM_LINK-1:0]		FTk_cfa1l_t;
@@ -271,9 +272,11 @@ import	pkg_extend_index::*;
 	typedef FTk_cfa3_t	[NUM_LINK-1:0]		FTk_cfa3l_t;
 	typedef FTk_f_t		[NUM_A-1:0]			FTk_fa1_t;
 	typedef FTk_f_t		[NUM_ALU*3-1:0]		FTk_fa3_t;
+	typedef FTk_f_t		[NUM_ALU-1:0]		FTk_a1f_t;
 
 	//	 Backward Token
-	typedef BTk_t		[NUM_ALU-1:0]		BTk_a1_t;
+	typedef BTk_t		[NUM_ALU-1:0]		BTk_a_t;
+	typedef BTk_a_t		[NUM_CHANNEL-1:0]	BTk_ac_t;
 	typedef BTk_c_t		[NUM_A-1:0]			BTk_cfa1_t;
 	typedef BTk_c_t		[NUM_A2-1:0]		BTk_cfa2_t;
 	typedef BTk_cfa1_t	[NUM_LINK-1:0]		BTk_cfa1l_t;
@@ -283,6 +286,7 @@ import	pkg_extend_index::*;
 	typedef BTk_cfa3_t	[NUM_LINK-1:0]		BTk_cfa3l_t;
 	typedef BTk_f_t		[NUM_A-1:0]			BTk_fa1_t;
 	typedef BTk_f_t		[NUM_ALU*3-1:0]		BTk_fa3_t;
+	typedef BTk_f_t		[NUM_ALU-1:0]		BTk_a1f_t;
 
 	//	 Types for Working-Set
 	typedef FTk_t		[NUM_WORKER-1:0]	FTk_W_t;

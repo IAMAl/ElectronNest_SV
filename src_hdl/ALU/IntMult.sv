@@ -101,6 +101,9 @@ module IntMultUnit
 	logic	[WIDTH_COND-1:0]	LUTAddr;
 	logic						Cond;
 
+	BTk_t						W_BTk_LALB;
+	BTk_t						W_BTk_LAMB;
+	BTk_t						W_BTk_MALB;
 
 	//// Capture Signal												////
 	logic						R_En;
@@ -219,7 +222,7 @@ module IntMultUnit
 		.reset(				reset						),
 		.I_We(				1'b1						),
 		.I_FTk(				PProd_LALB					),
-		.O_BTk(											),
+		.O_BTk(				W_BTk_LALB					),
 		.O_FTk(				FTk_LALB					),
 		.I_BTk(				BTk_LALB					)
 	);
@@ -229,7 +232,7 @@ module IntMultUnit
 		.reset(				reset						),
 		.I_We(				1'b1						),
 		.I_FTk(				PProd_MALB					),
-		.O_BTk(											),
+		.O_BTk(				W_BTk_MALB					),
 		.O_FTk(				FTk_MALB					),
 		.I_BTk(				BTk_LALB					)
 	);
@@ -239,7 +242,7 @@ module IntMultUnit
 		.reset(				reset						),
 		.I_We(				1'b1						),
 		.I_FTk(				PProd_LAMB					),
-		.O_BTk(											),
+		.O_BTk(				W_BTk_LAMB					),
 		.O_FTk(				FTk_LAMB					),
 		.I_BTk(				BTk_LAMB					)
 	);
@@ -314,8 +317,8 @@ module IntMultUnit
 
 	assign Cond				= I_Cond[ LUTAddr ];
 
-	assign O_BTk.n			= I_BTk.n;
-	assign O_BTk.t			= I_BTk.t;
+	assign O_BTk.n			= W_BTk_LALB.n;
+	assign O_BTk.t			= W_BTk_LALB.t;
 	assign O_BTk.v			= ( OutCondB ) ? FTk_L.c : I_BTk.v;
 	assign O_BTk.c			= ( OutCondB ) ? Cond : I_BTk.c;
 

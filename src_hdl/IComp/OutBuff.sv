@@ -112,7 +112,7 @@ module OutBuff
 	logic						ReadyD1;
 
 	//	Retimed Tokens
-	BTk_t						BTk0;
+	BTk_t						BTk;
 
 	//	 Capture Hit Signal to Output retimed Data wortd
 	logic						R_Hit;
@@ -182,14 +182,14 @@ module OutBuff
 
 	//// Backward Tokens											////
 	//		NOT-Retimed Nack Token
-	assign Nack			= BTk0.n;
+	assign Nack			= BTk.n | OutBuff_Full;
 
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin
-			BTk0		<= '0;
+			BTk		<= '0;
 		end
 		else begin
-			BTk0		<= I_BTk;
+			BTk		<= I_BTk;
 		end
 	end
 
@@ -204,7 +204,10 @@ module OutBuff
 									'0;
 
 	//	 Backward Tokens
-	assign O_BTk		= Nack;
+	assign O_BTk.n		= Nack;
+	assign O_BTk.t		= BTk.t;
+	assign O_BTk.v		= BTk.v;
+	assign O_BTk.c		= BTk.c;
 
 
 	//// Re-order Buffer											////

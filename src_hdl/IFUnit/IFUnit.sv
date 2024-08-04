@@ -240,10 +240,10 @@ module IFUnit
 			W_LdSt_FTk[ i ]			= Branch_FTk[ i ][1];
 			W_Branch_BTk[ i ][1]	= W_LdSt_BTk[ i ];
 
-			Branch_BTk[ i ][0][0].n	= W_Branch_BTk[ i ][0].n | R_Stall | Rename_Hazard;
-			Branch_BTk[ i ][0][0].t	= W_Branch_BTk[ i ][0].t;
-			Branch_BTk[ i ][0][0].v	= W_Branch_BTk[ i ][0].v;
-			Branch_BTk[ i ][0][0].c	= W_Branch_BTk[ i ][0].c;
+			Branch_BTk[ i ][0][0].n	= W_I_CTRL[ ID_OFFSET_IFEXTRN + i*2 + 0 ].n | R_Stall | Rename_Hazard;
+			Branch_BTk[ i ][0][0].t	= W_I_CTRL[ ID_OFFSET_IFEXTRN + i*2 + 0 ].t;
+			Branch_BTk[ i ][0][0].v	= W_I_CTRL[ ID_OFFSET_IFEXTRN + i*2 + 0 ].v;
+			Branch_BTk[ i ][0][0].c	= W_I_CTRL[ ID_OFFSET_IFEXTRN + i*2 + 0 ].c;
 
 			Branch_BTk[ i ][1][0].n	= W_Branch_BTk[ i ][1].n | R_Stall | Rename_Hazard;
 			Branch_BTk[ i ][1][0].t	= W_Branch_BTk[ i ][1].t;

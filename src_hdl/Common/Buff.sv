@@ -83,7 +83,7 @@ module SimpleBuff
 	assign En_Out			= ( Empty & Valid & ~R_Nack ) | Re;
 
 	//	 State in Full
-	assign Full				= Num == (DEPTH_BUFF-1);
+	//assign Full				= Num == (DEPTH_BUFF-1);
 
 
 	//// Output
@@ -225,7 +225,7 @@ module SimpleBuff
 		.I_Re(				Re							),
 		.I_FTk(				I_FTk						),
 		.O_FTk(				Buff_FTk					),
-		.O_Full(										),
+		.O_Full(			Full						),
 		.O_Empty(			Empty						),
 		.O_Num(				Num							)
 	);

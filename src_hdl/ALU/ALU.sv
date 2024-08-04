@@ -484,7 +484,7 @@ module ALU
 
 	//// Input Register												////
 	//	 Input Reg-A
-	assign InRegA_I_BTk.n	= ( PortA_O_InputData ) ? DataPath_BTkA.n : I_BTk.n | PortA_O_Nack;
+	assign InRegA_I_BTk.n	= ( PortA_O_InputData ) ? DataPath_BTkA.n | Full_Buff_A : I_BTk.n | PortA_O_Nack;
 	assign InRegA_I_BTk.t	= ( PortA_O_InputData ) ? DataPath_BTkA.t : I_BTk.t;
 	assign InRegA_I_BTk.v	= ( PortA_O_InputData ) ? DataPath_BTkA.v : I_BTk.v;
 	assign InRegA_I_BTk.c	= ( PortA_O_InputData ) ? DataPath_BTkA.c : I_BTk.c;
@@ -499,6 +499,7 @@ module ALU
 	);
 
 	assign In_Buff_FTkA			= ( PortA_O_InputData ) ? InRegA_FTk : '0;
+	logic					Full_Buff_A;
 	SimpleBuff #(
 		.DEPTH_BUFF(		8							),
 		.THRESHOLD(			4							),
@@ -507,16 +508,16 @@ module ALU
 	(
 		.clock(				clock						),
 		.reset(				reset						),
-		.I_FTk(				In_Buff_FTkA					),
+		.I_FTk(				In_Buff_FTkA				),
 		.O_BTk(				InRegA_BTk					),
 		.O_FTk(				OperandA					),
 		.I_BTk(				InRegA_I_BTk				),
 		.O_Empty(										),
-		.O_Full(										)
+		.O_Full(			Full_Buff_A					)
 	);
 
 	//	 Input Reg-B
-	assign InRegB_I_BTk.n	= ( PortB_O_InputData ) ? DataPath_BTkB.n : I_BTk.n | PortB_O_Nack;
+	assign InRegB_I_BTk.n	= ( PortB_O_InputData ) ? DataPath_BTkB.n | Full_Buff_B : I_BTk.n | PortB_O_Nack;
 	assign InRegB_I_BTk.t	= ( PortB_O_InputData ) ? DataPath_BTkB.t : I_BTk.t;
 	assign InRegB_I_BTk.v	= ( PortB_O_InputData ) ? DataPath_BTkB.v : I_BTk.v;
 	assign InRegB_I_BTk.c	= ( PortB_O_InputData ) ? DataPath_BTkB.c : I_BTk.c;
@@ -531,6 +532,7 @@ module ALU
 	);
 
 	assign In_Buff_FTkB			= ( PortB_O_InputData ) ? InRegB_FTk : '0;
+	logic					Full_Buff_B;
 	SimpleBuff #(
 		.DEPTH_BUFF(		8							),
 		.THRESHOLD(			4							),
@@ -544,11 +546,11 @@ module ALU
 		.O_FTk(				OperandB					),
 		.I_BTk(				InRegB_I_BTk				),
 		.O_Empty(										),
-		.O_Full(										)
+		.O_Full(			Full_Buff_B					)
 	);
 
 	//	 Input Reg-C
-	assign InRegC_I_BTk.n	= ( PortC_O_InputData ) ? DataPath_BTkC.n : I_BTk.n | PortC_O_Nack;
+	assign InRegC_I_BTk.n	= ( PortC_O_InputData ) ? DataPath_BTkC.n | Full_Buff_C : I_BTk.n | PortC_O_Nack;
 	assign InRegC_I_BTk.t	= ( PortC_O_InputData ) ? DataPath_BTkC.t : I_BTk.t;
 	assign InRegC_I_BTk.v	= ( PortC_O_InputData ) ? DataPath_BTkC.v : I_BTk.v;
 	assign InRegC_I_BTk.c	= ( PortC_O_InputData ) ? DataPath_BTkC.c : I_BTk.c;
@@ -563,6 +565,7 @@ module ALU
 	);
 
 	assign In_Buff_FTkC			= ( PortC_O_InputData ) ? InRegC_FTk : '0;
+	logic					Full_Buff_C;
 	SimpleBuff #(
 		.DEPTH_BUFF(		8							),
 		.THRESHOLD(			4							),
@@ -576,7 +579,7 @@ module ALU
 		.O_FTk(				OperandC					),
 		.I_BTk(				InRegC_I_BTk				),
 		.O_Empty(										),
-		.O_Full(										)
+		.O_Full(			Full_Buff_C					)
 	);
 
 

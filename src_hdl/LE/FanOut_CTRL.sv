@@ -21,7 +21,7 @@ module FanOut_FIFO
 #(
 	parameter int WIDTH_DATA		= 32,
 	parameter int WIDTH_LENGTH		= 8,
-	parameter int DEPTH_FIFO		= 12,
+	parameter int DEPTH_FIFO		= 16,
 	parameter int ExtdConfig		= 0
 )(
 	input							clock,

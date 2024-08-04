@@ -33,7 +33,7 @@ module ComputeTile
 	parameter int WIDTH_UNIT		= 8,
 	parameter int NUM_MEMUNIT		= 4,
 	parameter int SIZE_CRAM			= 256,
-	parameter int DEPTH_FIFO		= 12,
+	parameter int DEPTH_FIFO		= 16,
 	parameter int WIDTH_OPCODE		= 8,
 	parameter int WIDTH_CONSTANT	= 8,
 	parameter int NUM_WORKER		= 4,

@@ -70,8 +70,8 @@ module OutputBuffCTRL
 
 	//	 Full State
 	//		If NUM_ENTRY is Power of Two than checking MS-bit is sufficient
-	assign Full				= ( T_CNT[WIDTH_BUFF] ) ?	T_CNT == ( 1 - NUM_ENTRY ) :
-														T_CNT == ( NUM_ENTRY - 1 );
+	assign Full				= ( T_CNT[WIDTH_BUFF] ) ?	T_CNT == ( 2 - NUM_ENTRY ) :
+														T_CNT == ( NUM_ENTRY - 2 );
     assign O_Full			= Full;
 
 	//	 Empty State
@@ -95,10 +95,10 @@ module OutputBuffCTRL
 		else if ( I_Clr | Clr_W ) begin
 			R_WCNT			<= '0;
 		end
-		else if ( ~Full & I_We & ( R_WCNT == (NUM_ENTRY-1) )) begin
+		else if ( I_We & ( R_WCNT == (NUM_ENTRY-1) )) begin
 			R_WCNT  		<= '0;
 		end
-		else if ( ~Full & I_We ) begin
+		else if ( I_We ) begin
 			R_WCNT  		<= R_WCNT + 1'b1;
 		end
 	end
