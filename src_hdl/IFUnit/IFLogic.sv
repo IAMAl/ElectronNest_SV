@@ -138,13 +138,16 @@ module IFLogic
 
 	//St-Buff <-> St-DReg;
 	assign H_I_FTk.v			= H_O_FTk.v;
-	assign H_I_FTk.a			= H_O_FTk.a | ( ( FSM_FrontEnd == IFLOGIC_ST_CHECK_ATTRIB ) & St_Valid & ~is_RConfigData ) | ( ( FSM_FrontEnd == IFLOGIC_ST_SEND_RCFG ) & St_Valid );
+	assign H_I_FTk.a			= H_O_FTk.a | ( ( FSM_FrontEnd == IFLOGIC_ST_CHECK_ATTRIB ) & St_Valid & ( ~is_RConfigData | ( is_RConfigData & ( I_FTk.d[15:8] == 8'h3 ) ) ) ) | ( ( FSM_FrontEnd == IFLOGIC_ST_SEND_RCFG ) & St_Valid );
 	assign H_I_FTk.c			= H_O_FTk.c;
-	assign H_I_FTk.r			= H_O_FTk.r | ( ( FSM_FrontEnd == IFLOGIC_ST_CHECK_ATTRIB ) & St_Valid & ~is_RConfigData ) | ( ( FSM_FrontEnd == IFLOGIC_ST_SEND_RCFG ) & St_Valid );
+	assign H_I_FTk.r			= H_O_FTk.r | ( ( FSM_FrontEnd == IFLOGIC_ST_CHECK_ATTRIB ) & St_Valid & ( ~is_RConfigData | ( is_RConfigData & ( I_FTk.d[15:8] == 8'h3 ) ) ) ) | ( ( FSM_FrontEnd == IFLOGIC_ST_SEND_RCFG ) & St_Valid );
 	assign H_I_FTk.d			= H_O_FTk.d;
 	assign H_I_FTk.i			= H_O_FTk.i;
+
+	logic						Send_FTk_Req;
+	assign Send_FTk_Req			= ( ( FSM_FrontEnd < IFLOGIC_ST_SEND_ROUTE ) & ( FSM_FrontEnd > IFLOGIC_ST_INIT ) ) | ( ( FSM_FrontEnd == IFLOGIC_ST_INIT ) & is_Acq );
 	assign W_I_FTk				= ( FSM_BackEnd == IFLOGIC_ST_BACK_RUN ) ?	B_S_FTk_IF :
-									( Header ) ? 							H_I_FTk :
+									( Send_FTk_Req ) ? 						H_I_FTk :
 																			'0;
 
 	assign W_H_BTk.n			= Nack_to_CU;
@@ -166,7 +169,7 @@ module IFLogic
 	assign Nack_to_CU			= ( Set_RConfig | ( FSM_BackEnd == IFLOGIC_ST_BACK_RUN ) ) & ~R_St;
 
 	//Store-Buffer
-	assign Charge_St			= ( FSM_FrontEnd != 0 ) | ( ( FSM_FrontEnd == IFLOGIC_ST_INIT ) & is_Acq );
+
 	assign Release_St			= ( FSM_BackEnd == IFLOGIC_ST_BACK_RUN );
 
 	assign St_Term				= ( W_O_FTk.v & W_O_FTk.a & W_O_FTk.r );
@@ -269,7 +272,7 @@ module IFLogic
 			end
 			else if ( St_Valid ) begin
 				//Capture Attrib Word, Send Route Data
-				FSM_FrontEnd	<= IFLOGIC_ST_FRONT_RUN;
+				FSM_FrontEnd	<= IFLOGIC_ST_SEND_ROUTE;
 			end
 		end
 		IFLOGIC_ST_CHECK_RCFG: begin
@@ -286,6 +289,9 @@ module IFLogic
 		end
 		IFLOGIC_ST_RETIME_RCFG: begin
 				//Send R-Config Data
+				FSM_FrontEnd	<= IFLOGIC_ST_FRONT_RUN;
+		end
+		IFLOGIC_ST_SEND_ROUTE: begin
 				FSM_FrontEnd	<= IFLOGIC_ST_FRONT_RUN;
 		end
 		IFLOGIC_ST_FRONT_RUN: begin
@@ -375,11 +381,10 @@ module IFLogic
 
 	//// Buffer														////
 	//	 Buffer for Data from External World
-	Buff #(
+	BuffEn #(
 		.DEPTH_FIFO(		DEPTH_FIFO					),
 		.THRESHOLD(			6							),
-		.PASS(				0							),
-		.BUFF(				1							)
+		.TYPE_FWRD(			FTk_t						)
 	) LdBuff
 	(
 		.clock(				clock						),
@@ -390,24 +395,37 @@ module IFLogic
 		.I_BTk(				B_L_BTk_IF					),
 		.I_We(				1'b1						),
 		.I_Re(				1'b1						),
-		.I_Chg_Buff(		1'b0						),
-		.I_Rls_Buff(		1'b0						),
-		.I_SendID(			1'b0						),
 		.O_Empty(			Ld_Buff_Empty				),
 		.O_Full(			Ld_Buff_Full				)
 	);
 
 	//	 Buffer for Data from Compute Tile
-	assign B_FTk		= ( ( FSM_FrontEnd > IFLOGIC_ST_ID_F ) & ( FSM_FrontEnd < IFLOGIC_ST_CHECK_ATTRIB ) ) ?				'0 :
+	FTk_t					W_FTk_Req;
+	assign W_FTk_Req.v		= I_FTk.v;
+	assign W_FTk_Req.a		= 1'b1;
+	assign W_FTk_Req.c		= I_FTk.c;
+	assign W_FTk_Req.r		= 1'b1;
+	assign W_FTk_Req.i		= I_FTk.i;
+	assign W_FTk_Req.d		= I_FTk.d;
+	assign B_FTk		= //( ( FSM_FrontEnd > IFLOGIC_ST_ID_F ) & ( FSM_FrontEnd < IFLOGIC_ST_CHECK_ATTRIB ) ) ?				'0 :
 							( ( FSM_FrontEnd == IFLOGIC_ST_CHECK_ATTRIB ) & St_Valid & is_RConfigData & ( Length == 0 )) ?	'0 :
-							( FSM_FrontEnd == IFLOGIC_ST_SEND_RCFG ) ?														'0 :
+							//( FSM_FrontEnd == IFLOGIC_ST_SEND_RCFG ) ?														'0 :
 							( FSM_FrontEnd == IFLOGIC_ST_RETIME_RCFG ) ?													'0 :
+							//( FSM_FrontEnd == IFLOGIC_ST_SEND_ROUTE ) ?														W_FTk_Req :
 																															I_FTk;
-	Buff #(
+	logic					We_BuffSt;
+	logic					Re_BuffSt;
+	assign Charge_St	= ( ( FSM_FrontEnd == IFLOGIC_ST_INIT ) & is_Acq ) | (( FSM_FrontEnd > IFLOGIC_ST_INIT ) & ( FSM_FrontEnd < IFLOGIC_ST_ATTRIB ));
+	assign We_BuffSt	= Charge_St |
+							( is_RConfigData & ( I_FTk.d[15:8] == 8'h3 ) ) |
+							( FSM_FrontEnd == IFLOGIC_ST_SEND_ROUTE ) |
+							( FSM_FrontEnd == IFLOGIC_ST_FRONT_RUN ) |
+							( FSM_BackEnd == IFLOGIC_ST_BACK_RUN );
+	assign Re_BuffSt	= ~( ( FSM_FrontEnd == IFLOGIC_ST_FRONT_RUN ) & ~R_St ) & ( FSM_FrontEnd != IFLOGIC_ST_SEND_ROUTE ) & ~( ( FSM_FrontEnd > IFLOGIC_ST_ID_F ) & ( FSM_FrontEnd < IFLOGIC_ST_SEND_ROUTE ) ) & ~Charge_St;
+	BuffEn #(
 		.DEPTH_FIFO(		DEPTH_FIFO					),
 		.THRESHOLD(			6							),
-		.PASS(				0							),
-		.BUFF(				1							)
+		.TYPE_FWRD(			FTk_t						)
 	) StBuff
 	(
 		.clock(				clock						),
@@ -416,11 +434,8 @@ module IFLogic
 		.O_BTk(				O_BTk						),
 		.O_FTk(				B_S_FTk_IF					),
 		.I_BTk(				B_S_BTk_IF					),
-		.I_We(				1'b1						),
-		.I_Re(				1'b1						),
-		.I_Chg_Buff(		Charge_St					),
-		.I_Rls_Buff(		Release_St					),
-		.I_SendID(			1'b0						),
+		.I_We(				We_BuffSt					),
+		.I_Re(				Re_BuffSt					),
 		.O_Empty(			St_Buff_Empty				),
 		.O_Full(			St_Buff_Full				)
 	);

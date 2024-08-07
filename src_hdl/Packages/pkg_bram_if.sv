@@ -221,7 +221,8 @@ import pkg_en::*;
 		IFLOGIC_ST_CHECK_RCFG	= 4'h6,
 		IFLOGIC_ST_SEND_RCFG	= 4'h7,
 		IFLOGIC_ST_RETIME_RCFG	= 4'h8,
-		IFLOGIC_ST_FRONT_RUN	= 4'h9
+		IFLOGIC_ST_SEND_ROUTE	= 4'h9,
+		IFLOGIC_ST_FRONT_RUN	= 4'ha
 	} fsm_iflogic_st_frontend;
 
 	typedef enum logic {

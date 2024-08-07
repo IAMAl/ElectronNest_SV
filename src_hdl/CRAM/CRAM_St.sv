@@ -21,7 +21,8 @@ module CRAM_St
 	parameter int WIDTH_ADDR		= 8,
 	parameter int NumWordsLength	= 1,
 	parameter int NumWordsStride	= 1,
-	parameter int NumWordsBase		= 1
+	parameter int NumWordsBase		= 1,
+	parameter int EXTERN			= 0
 )(
 	input							clock,
 	input							reset,
@@ -211,7 +212,8 @@ module CRAM_St
 		.WIDTH_LENGTH(		WIDTH_ADDR					),
 		.NumWordsLength(	1							),
 		.NumWordsStride(	1							),
-		.NumWordsBase(		1							)
+		.NumWordsBase(		1							),
+		.EXTERN(			EXTERN						)
 	) CRAM_St_CTRL
 	(
 		.clock(				clock						),

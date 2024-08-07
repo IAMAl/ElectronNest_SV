@@ -89,15 +89,15 @@ module SyncUnit
 	logic						Shared_A;
 	logic						Shared_B;
 
-	logic						W_Send_SZero_A;
-	logic						W_Send_SZero_B;
-	logic						W_Send_SNZero_A;
-	logic						W_Send_SNZero_B;
+	logic						W_Send_SData_A;
+	logic						W_Send_SData_B;
+	logic						W_Send_SData_A;
+	logic						W_Send_SData_B;
 
-	logic						Send_SZero_A;
-	logic						Send_SZero_B;
-	logic						Send_SNZero_A;
-	logic						Send_SNZero_B;
+	logic						Send_SData_A;
+	logic						Send_SData_B;
+	logic						Send_SData_A;
+	logic						Send_SData_B;
 
 	logic						Send_Shared_Data;
 
@@ -135,6 +135,9 @@ module SyncUnit
 	logic						Exceed_FTk_A;
 	logic						Exceed_FTk_B;
 
+	//
+	logic						Stop_Send_Init;
+
 	//	 Send Data Flag
 	logic						Send_Data_A;
 	logic						Send_Data_B;
@@ -156,8 +159,16 @@ module SyncUnit
 	logic						Nack_Capacity_A;
 	logic						Nack_Capacity_B;
 
+	logic						BothUnCompressed;
+	logic						OneCompressed;
+	logic						BothCompressed;
+
+	logic						Care_State;
+
 
 	//// Capture Signal												////
+	logic	[2:0]				FSM_FirstData;
+
 	//	 Capture Shared Data Word
     FTk_t						R_SFTk_A;
     FTk_t						R_SFTk_B;
@@ -178,6 +189,10 @@ module SyncUnit
 	logic						Send_Null_A;
 	logic						Send_Null_B;
 
+	//
+	logic						Retime_A;
+	logic						Retime_B;
+
 	//	 State in Releasing
 	logic						R_Rls_A;
 	logic						R_Rls_B;
@@ -186,11 +201,9 @@ module SyncUnit
 	logic						R_IndexMismatch_A;
 	logic						R_IndexMismatch_B;
 
-	//	 Retime Nack
-	logic						R_Nack_A;
-	logic						R_Nack_B;
-
 	logic						R_Send_Data;
+
+	logic	[7:0]				R_Count;
 
 
 	//// Valid Token												////
@@ -231,15 +244,18 @@ module SyncUnit
 	assign Send_Data_B		= ( ~R_IndexMismatch_B & Send_Data & ~( Run_NoShared_B & Send_Data & ~R_Send_Data ) ) |
 								( R_IndexMismatch_A & ( Num_A == 2'h0 ) );
 
+	//
+	assign Care_State		= ( Num_A == 2'h0 ) & ( Num_B == 2'h0 ) & ( R_IndexMismatch_A | R_IndexMismatch_B ) & OneCompressed;
+
 	// Recovery
-	assign Exceed_FTk_A		= ( R_IndexMismatch_A & ~Send_Data_A & Send_Data_B & ( Num_A > 2'h1) );
+	assign Exceed_FTk_A		= ( R_IndexMismatch_A & ~Send_Data_A & Send_Data_B & ( Num_A > 2'h1) & ~Care_State );
 
 	// Select Output
 	assign FTk_A			= ( R_IndexMismatch_A | Retime_A | BTk_A.n ) ? R_FTk_A : FTk_A_;
 
 	// Buffer Control
-	assign En_Wr_A			= Valid_A & ~BTk_A.n;
-	assign En_Rd_A			= ( Send_Data_A & ~Retime_A ) | Exceed_FTk_A | Ready_Rls_A;
+	assign En_Wr_A			= Valid_A & ( Care_State | ~BTk_A.n );
+	assign En_Rd_A			= ( Send_Data_A & ~Retime_A & ~Care_State ) | Exceed_FTk_A | Ready_Rls_A;
 	RingBuff2 #(
 		.DEPTH_BUFF(		2							),
 		.WIDTH_DEPTH(		1							),
@@ -263,36 +279,38 @@ module SyncUnit
 		if ( reset ) begin
 			R_FTk_A			<= '0;
 		end
-		else if ( IndexMismatch_A & ~R_IndexMismatch_A & ~BTk_A.n ) begin
+		else if ( IndexMismatch_A & ~R_IndexMismatch_A & ~BTk_A.n & ~Care_State ) begin
 			R_FTk_A			<= FTk_A_;
 		end
-		else if ( I_BTk_A.n | ( IndexMismatch_B & I_FTk_A.v ) ) begin
+		else if ( ( I_BTk_A.n & ~BTk_A.n ) | ( IndexMismatch_B & I_FTk_A.v ) ) begin
 			R_FTk_A			<= I_FTk_A;
 		end
-		else if ( R_IndexMismatch_B & Send_Data_A ) begin
+		else if ( R_IndexMismatch_B & Send_Data_A & ~Care_State ) begin
 			R_FTk_A			<= '0;
 		end
 	end
 
-	logic					Retime_A;
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin
 			Retime_A		<= 1'b0;
 		end
-		else begin
-			Retime_A		<= R_IndexMismatch_A & ~Send_Data & ~Empty_A;
+		else if ( Send_Data_A & ( Num_A > 2'h0 ) & ~IndexMismatch_A ) begin
+			Retime_A		<= 1'b0;
+		end
+		else if ( ( R_IndexMismatch_A & ~Send_Data & ~Empty_A ) | ( R_IndexMismatch_A & Care_State ) ) begin
+			Retime_A		<= 1'b1;
 		end
 	end
 
 	// Recovery
-	assign Exceed_FTk_B		= ( R_IndexMismatch_B & ~Send_Data_B & Send_Data_A & ( Num_B > 2'h1 ) );
+	assign Exceed_FTk_B		= ( R_IndexMismatch_B & ~Send_Data_B & Send_Data_A & ( Num_B > 2'h1 ) & ~Care_State );
 
 	// Select Output
 	assign FTk_B			= ( R_IndexMismatch_B | Retime_B | BTk_B.n ) ? R_FTk_B : FTk_B_;
 
 	// Buffer Control
-	assign En_Wr_B			= Valid_B & ~BTk_B.n;
-	assign En_Rd_B			= ( Send_Data_B & ~Retime_B ) | Exceed_FTk_B | Ready_Rls_B;
+	assign En_Wr_B			= Valid_B & ( Care_State | ~BTk_B.n );
+	assign En_Rd_B			= ( Send_Data_B & ~Retime_B & ~Care_State ) | Exceed_FTk_B | Ready_Rls_B;
 	RingBuff2 #(
 		.DEPTH_BUFF(		2							),
 		.WIDTH_DEPTH(		1							),
@@ -316,24 +334,26 @@ module SyncUnit
 		if ( reset ) begin
 			R_FTk_B			<= '0;
 		end
-		else if ( IndexMismatch_B & ~R_IndexMismatch_B & ~BTk_B.n ) begin
+		else if ( IndexMismatch_B & ~R_IndexMismatch_B & ~BTk_B.n & ~Care_State ) begin
 			R_FTk_B			<= FTk_B_;
 		end
-		else if ( I_BTk_B.n | ( IndexMismatch_A & I_FTk_B.v ) ) begin
+		else if ( ( I_BTk_B.n & ~BTk_B.n ) | ( IndexMismatch_A & I_FTk_B.v ) ) begin
 			R_FTk_B			<= I_FTk_B;
 		end
-		else if ( R_IndexMismatch_A & Send_Data_B ) begin
+		else if ( R_IndexMismatch_A & Send_Data_B & ~Care_State ) begin
 			R_FTk_B			<= '0;
 		end
 	end
 
-	logic					Retime_B;
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin
 			Retime_B		<= 1'b0;
 		end
-		else begin
-			Retime_B		<= R_IndexMismatch_B & ~Send_Data & ~Empty_B;
+		else if ( Send_Data_B & ( Num_B > 2'h0 ) & ~IndexMismatch_B ) begin
+			Retime_B		<= 1'b0;
+		end
+		else if ( ( R_IndexMismatch_B & ~Send_Data & ~Empty_B ) | ( R_IndexMismatch_B & Care_State ) ) begin
+			Retime_B		<= 1'b1;
 		end
 	end
 
@@ -378,34 +398,66 @@ module SyncUnit
 		end
 	end
 
-	logic					Stop_Send_Init;
-	assign Stop_Send_Init	= (  ~R_Send_Data & ~( Run_NoShared_A ^ Run_NoShared_B ) );// |
-//								~( R_Send_Data & ~( Run_NoShared_A & Run_NoShared_B ) );
 
-	logic					R_Send_Data2;
+	assign Stop_Send_Init	= ( FSM_FirstData < 3'h3 ) & ~( ( FSM_FirstData == 3'h1 ) & BothCompressed ) |
+								Care_State;
+
+	assign BothUnCompressed	=  Run_NoShared_A &  Run_NoShared_B;
+	assign OneCompressed	=  Run_NoShared_A ^  Run_NoShared_B;
+	assign BothCompressed	=  ~Run_NoShared_A &  ~Run_NoShared_B;
+
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin
-			R_Send_Data2	<= 1'b0;
+			FSM_FirstData	<= 3'h0;
 		end
-		else if ( is_Fired_Rls ) begin
-			R_Send_Data2	<= 1'b0;
-		end
-		else if ( R_Send_Data & ~Stop_Send_Init ) begin
-			R_Send_Data2	<= 1'b1;
-		end
-	end
-
-	logic					R_Send_Data3;
-	always_ff @( posedge clock ) begin
-		if ( reset ) begin
-			R_Send_Data3	<= 1'b0;
-		end
-		else if ( is_Fired_Rls ) begin
-			R_Send_Data3	<= 1'b0;
-		end
-		else if ( R_Send_Data2 & O_FTk_A.v & O_FTk_B.v ) begin
-			R_Send_Data3	<= 1'b1;
-		end
+		else case ( FSM_FirstData )
+			3'h0: begin
+				if ( ReadyOp ) begin
+					FSM_FirstData	<= 3'h1;
+				end
+				else begin
+					FSM_FirstData	<= 3'h0;
+				end
+			end
+			3'h1: begin
+				if ( FTk_A.v & FTk_B.v & BothUnCompressed ) begin
+					FSM_FirstData	<= 3'h3;
+				end
+				else if ( FTk_A.v & FTk_B.v & OneCompressed ) begin
+					FSM_FirstData	<= 3'h3;
+				end
+				else if ( FTk_A.v & FTk_B.v & BothCompressed ) begin
+					FSM_FirstData	<= 3'h2;
+				end
+			end
+			3'h3: begin
+				if ( ~Nack ) begin
+					FSM_FirstData	<= 3'h4;
+				end
+				else begin
+					FSM_FirstData	<= 3'h2;
+				end
+			end
+			3'h2: begin
+				if ( ~Nack & O_FTk_A.v & O_FTk_B.v ) begin
+					FSM_FirstData	<= 3'h4;
+				end
+				else begin
+					FSM_FirstData	<= 3'h3;
+				end
+			end
+			3'h4: begin
+				if ( is_Fired_Rls ) begin
+					FSM_FirstData	<= 3'h0;
+				end
+				else begin
+					FSM_FirstData	<= 3'h4;
+				end
+			end
+			default: begin
+				FSM_FirstData	<= 3'h0;
+			end
+		endcase
 	end
 
 	assign Send_Null_A		= IndexMismatch_A & Run_NoShared_A;
@@ -413,90 +465,90 @@ module SyncUnit
 
 	//		Source-0
     assign O_FTk_A.v        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_A ) ?	FTk_A.v | is_Fired_Rls :
+								( Ready_Rls_A ) ?				FTk_A.v | is_Fired_Rls :
 								( Send_Null_A ) ?				1'b1 :
-								( Send_SNZero_A ) ?				R_SFTk_A.v :
+								( Send_SData_A ) ?				R_SFTk_A.v :
 								( Send_Data_A ) ?				FTk_A.v :
 								( R_IndexMismatch_A ) ?			FTk_A.v :
 																'0;
 	assign O_FTk_A.a        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_A ) ?	FTk_A.a | is_Fired_Rls :
+								( Ready_Rls_A ) ?				FTk_A.a | is_Fired_Rls :
 								( Send_Null_A ) ?				1'b0 :
-								( Send_SNZero_A ) ?				R_SFTk_A.a :
+								( Send_SData_A ) ?				R_SFTk_A.a :
 								( Send_Data_A ) ?				FTk_A.a :
 								( R_IndexMismatch_A ) ?			FTk_A.a :
 																'0;
 	assign O_FTk_A.c        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_A ) ?	FTk_A.c | is_Fired_Rls :
+								( Ready_Rls_A ) ?				FTk_A.c | is_Fired_Rls :
 								( Send_Null_A ) ?				1'b0 :
-								( Send_SNZero_A ) ?				R_SFTk_A.c :
+								( Send_SData_A ) ?				R_SFTk_A.c :
 								( Send_Data_A ) ?				FTk_A.c :
 								( R_IndexMismatch_A ) ?			FTk_A.c :
 																'0;
 	assign O_FTk_A.r        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_A ) ?	FTk_A.r | is_Fired_Rls :
+								( Ready_Rls_A ) ?				FTk_A.r | is_Fired_Rls :
 								( Send_Null_A ) ?				1'b0 :
-								( Send_SNZero_A ) ?				R_SFTk_A.r :
+								( Send_SData_A ) ?				R_SFTk_A.r :
 								( Send_Data_A ) ?				FTk_A.r :
 								( R_IndexMismatch_A ) ?			FTk_A.r :
 																'0;
     assign O_FTk_A.i        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_A ) ?	Index_B :
+								( Ready_Rls_A ) ?				Index_B :
 								( Send_Null_A ) ?				Index_B :
-								( Send_SNZero_A ) ?				Index_B :
+								( Send_SData_A ) ?				Index_B :
 								( Run_NoShared_A ) ?			R_Count :
 								( Send_Data_A ) ?				FTk_A.i :
 								( R_IndexMismatch_A ) ?			FTk_A.i :
 																'0;
     assign O_FTk_A.d        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_A ) ?	FTk_A.d :
+								( Ready_Rls_A ) ?				FTk_A.d :
 								( Send_Null_A ) ?				'0 :
-								( Send_SNZero_A ) ?				R_SFTk_A.d :
+								( Send_SData_A ) ?				R_SFTk_A.d :
 								( Send_Data_A ) ?				FTk_A.d :
 								( R_IndexMismatch_A ) ?			FTk_A.d :
 																'0;
 
 	//		Source-1
 	assign O_FTk_B.v        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_B ) ?	FTk_B.v | is_Fired_Rls :
+								( Ready_Rls_B ) ?				FTk_B.v | is_Fired_Rls :
 								( Send_Null_B ) ?				1'b1 :
-								( Send_SNZero_B ) ?				R_SFTk_B.v :
+								( Send_SData_B ) ?				R_SFTk_B.v :
 								( Send_Data_B ) ?				FTk_B.v :
 								( R_IndexMismatch_B ) ?			FTk_B.v :
 																'0;
 	assign O_FTk_B.a        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_B ) ?	FTk_B.a | is_Fired_Rls :
+								( Ready_Rls_B ) ?				FTk_B.a | is_Fired_Rls :
 								( Send_Null_B ) ?				1'b0 :
-								( Send_SNZero_B ) ?				R_SFTk_B.a :
+								( Send_SData_B ) ?				R_SFTk_B.a :
 								( Send_Data_B ) ?				FTk_B.a :
 								( R_IndexMismatch_B ) ?			FTk_B.a :
 																'0;
 	assign O_FTk_B.c        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_B ) ?	FTk_B.c | is_Fired_Rls :
+								( Ready_Rls_B ) ?				FTk_B.c | is_Fired_Rls :
 								( Send_Null_B ) ?				1'b0 :
-								( Send_SNZero_B ) ?				R_SFTk_B.c :
+								( Send_SData_B ) ?				R_SFTk_B.c :
 								( Send_Data_B ) ?				FTk_B.c :
 								( R_IndexMismatch_B ) ?			FTk_B.c :
 																'0;
 	assign O_FTk_B.r        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_B ) ?	FTk_B.r | is_Fired_Rls :
+								( Ready_Rls_B ) ?				FTk_B.r | is_Fired_Rls :
 								( Send_Null_B ) ?				1'b0 :
-								( Send_SNZero_B ) ?				R_SFTk_B.r :
+								( Send_SData_B ) ?				R_SFTk_B.r :
 								( Send_Data_B ) ?				FTk_B.r :
 								( R_IndexMismatch_B ) ?			FTk_B.r :
 																'0;
 	assign O_FTk_B.i        = ( Stop_Send_Init ) ?				'0 :
 								( Ready_Rls_B ) ?				Index_A :
 								( Send_Null_B ) ?				Index_A :
-								( Send_SNZero_B ) ?				Index_A :
+								( Send_SData_B ) ?				Index_A :
 								( Run_NoShared_B ) ?			R_Count :
 								( Send_Data_B ) ?				FTk_B.i :
 								( R_IndexMismatch_B ) ?			FTk_B.i :
 																'0;
 	assign O_FTk_B.d        = ( Stop_Send_Init ) ?				'0 :
-								( Ready_Rls_B ) ?	FTk_B.d :
+								( Ready_Rls_B ) ?				FTk_B.d :
 								( Send_Null_B ) ?				'0 :
-								( Send_SNZero_B ) ?				R_SFTk_B.d :
+								( Send_SData_B ) ?				R_SFTk_B.d :
 								( Send_Data_B ) ?				FTk_B.d :
 								( R_IndexMismatch_B ) ?			FTk_B.d :
 																'0;
@@ -508,37 +560,12 @@ module SyncUnit
 
 	assign Nack_A			= ( Nack_Capacity_A & ~Nack_Capacity_B ) |
 								(( Num_A == 2'h2 ) & ( Num_B < 2'h2 ) & ~Nack_Capacity_B ) |
-								//(( R_Nack_A & ~Valid_B ) & ~( R_Nack_B & ~Valid_A )) |
-								( R_IndexMismatch_A & ~Send_Data_A & ~Send_Data_B );
+								( R_IndexMismatch_A & ~Send_Data_A & ~Send_Data_B );// |
 
 	assign Nack_B			= ( Nack_Capacity_B & ~Nack_Capacity_A ) |
 								(( Num_B == 2'h2 ) & ( Num_A < 2'h2 ) & ~Nack_Capacity_A ) |
-								//(( R_Nack_B & ~Valid_A ) & ~( R_Nack_A & ~Valid_B )) |
-								( R_IndexMismatch_B & ~Send_Data_B & ~Send_Data_A );
+								( R_IndexMismatch_B & ~Send_Data_B & ~Send_Data_A );// |
 
-	always_ff @( posedge clock ) begin
-		if ( reset ) begin
-			R_Nack_A		<= 1'b0;
-		end
-		else if ( Valid_B & ( Num_A == 2'h0 ) ) begin
-			R_Nack_A		<= 1'b0;
-		end
-		else if ( Nack_A | ( Num_A == 2'h2 ) ) begin
-			R_Nack_A		<= 1'b1;
-		end
-	end
-
-	always_ff @( posedge clock ) begin
-		if ( reset ) begin
-			R_Nack_B		<= 1'b0;
-		end
-		else if ( Valid_A & ( Num_B == 2'h0 ) ) begin
-			R_Nack_B		<= 1'b0;
-		end
-		else if ( Nack_B | ( Num_B == 2'h2 ) ) begin
-			R_Nack_B		<= 1'b1;
-		end
-	end
 
 	assign O_BTk_A.n		= I_BTk_A.n | Nack | Nack_A;
 	assign O_BTk_A.t		= BTk_A.t;
@@ -595,8 +622,10 @@ module SyncUnit
 	//// Skip-Initialize Controllers								////
 	assign O_Shared			= Shared_A & Shared_B;
 
-	assign Send_Shared_Data	= ( W_Send_SZero_A | W_Send_SNZero_A ) & ( W_Send_SZero_B | W_Send_SNZero_B );
+	assign Send_Shared_Data	= W_Send_SData_A & W_Send_SData_B;
 
+	assign Send_SData_A		= IndexMismatch_A & R_SFTk_A.v;
+	assign Send_SData_B		= IndexMismatch_B & R_SFTk_B.v;
 
 	SkipInit SkipInitA (
 		.clock(				clock						),
@@ -611,8 +640,8 @@ module SyncUnit
 		.O_Store(			Store_SFTk_A				),
 		.O_Zero(			O_Zero_A					),
 		.O_Shared(			Shared_A					),
-		.O_Send_SZero(		W_Send_SZero_A				),
-		.O_Send_SNZero(		W_Send_SNZero_A				),
+		.O_Send_SZero(		W_Send_SData_A				),
+		.O_Send_SNZero(		W_Send_SData_A				),
 		.O_Run_NoShared(	Run_NoShared_A				)
 	);
 
@@ -629,16 +658,10 @@ module SyncUnit
 		.O_Store(			Store_SFTk_B				),
 		.O_Zero(			O_Zero_B					),
 		.O_Shared(			Shared_B					),
-		.O_Send_SZero(		W_Send_SZero_B				),
-		.O_Send_SNZero(		W_Send_SNZero_B				),
+		.O_Send_SZero(		W_Send_SData_B				),
+		.O_Send_SNZero(		W_Send_SData_B				),
 		.O_Run_NoShared(	Run_NoShared_B				)
 	);
-
-	assign Send_SZero_A		= IndexMismatch_A & R_SFTk_A.v;
-	assign Send_SZero_B		= IndexMismatch_B & R_SFTk_B.v;
-
-	assign Send_SNZero_A	= IndexMismatch_A & R_SFTk_A.v;
-	assign Send_SNZero_B	= IndexMismatch_B & R_SFTk_B.v;
 
 
 	//// Index Handler												////
@@ -650,7 +673,6 @@ module SyncUnit
 	assign Validation_A		= W_FTk_A.v;
 	assign Validation_B		= W_FTk_B.v;
 
-	logic	[7:0]			R_Count;
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin
 			R_Count			<= '0;
@@ -658,7 +680,10 @@ module SyncUnit
 		else if ( is_Fired_Rls ) begin
 			R_Count			<= '0;
 		end
-		else if ( ( ( Run_NoShared_A  ^ Run_NoShared_B ) ) & R_Send_Data3 & O_FTk_A.v & O_FTk_B.v )  begin
+		else if ( ( FSM_FirstData == 3'h4 ) & OneCompressed & O_FTk_A.v & O_FTk_B.v )  begin
+			R_Count			<= R_Count + 1'b1;
+		end
+		else if ( ( FSM_FirstData == 3'h3 ) & O_FTk_A.v & O_FTk_B.v ) begin
 			R_Count			<= R_Count + 1'b1;
 		end
 	end
@@ -668,8 +693,8 @@ module SyncUnit
 	assign Index_B			= ( Run_NoShared_B & Run_NoShared_A ) ? '0 : ( Run_NoShared_B & ~Run_NoShared_A ) ? R_Count : W_FTk_B.i;
 
 	//	 Mismatch Detection
-	assign IndexMismatch_A	= ( Index_A > Index_B ) & Validation_A & Validation_B & ReadyOp;
-	assign IndexMismatch_B	= ( Index_B > Index_A ) & Validation_B & Validation_A & ReadyOp;
+	assign IndexMismatch_A	= ( Index_A > Index_B ) & Validation_A & Validation_B & ReadyOp & ~BTk_A.n;
+	assign IndexMismatch_B	= ( Index_B > Index_A ) & Validation_B & Validation_A & ReadyOp & ~BTk_B.n;
 
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin

@@ -484,10 +484,15 @@ module ALU
 
 	//// Input Register												////
 	//	 Input Reg-A
-	assign InRegA_I_BTk.n	= ( PortA_O_InputData ) ? DataPath_BTkA.n | Full_Buff_A : I_BTk.n | PortA_O_Nack;
+	assign InRegA_I_BTk.n	= ( PortA_O_InputData ) ? DataPath_BTkA.n : I_BTk.n | PortA_O_Nack;
 	assign InRegA_I_BTk.t	= ( PortA_O_InputData ) ? DataPath_BTkA.t : I_BTk.t;
 	assign InRegA_I_BTk.v	= ( PortA_O_InputData ) ? DataPath_BTkA.v : I_BTk.v;
 	assign InRegA_I_BTk.c	= ( PortA_O_InputData ) ? DataPath_BTkA.c : I_BTk.c;
+	BTk_t					InRegA_BTk_;
+	assign InRegA_BTk.n		= InRegA_BTk_.n | Full_Buff_A;
+	assign InRegA_BTk.t		= InRegA_BTk_.t;
+	assign InRegA_BTk.v		= InRegA_BTk_.v;
+	assign InRegA_BTk.c		= InRegA_BTk_.c;
 	DReg InRegA (
 		.clock(				clock						),
 		.reset(				reset						),
@@ -509,7 +514,7 @@ module ALU
 		.clock(				clock						),
 		.reset(				reset						),
 		.I_FTk(				In_Buff_FTkA				),
-		.O_BTk(				InRegA_BTk					),
+		.O_BTk(				InRegA_BTk_					),
 		.O_FTk(				OperandA					),
 		.I_BTk(				InRegA_I_BTk				),
 		.O_Empty(										),
@@ -517,10 +522,15 @@ module ALU
 	);
 
 	//	 Input Reg-B
-	assign InRegB_I_BTk.n	= ( PortB_O_InputData ) ? DataPath_BTkB.n | Full_Buff_B : I_BTk.n | PortB_O_Nack;
+	assign InRegB_I_BTk.n	= ( PortB_O_InputData ) ? DataPath_BTkB.n : I_BTk.n | PortB_O_Nack;
 	assign InRegB_I_BTk.t	= ( PortB_O_InputData ) ? DataPath_BTkB.t : I_BTk.t;
 	assign InRegB_I_BTk.v	= ( PortB_O_InputData ) ? DataPath_BTkB.v : I_BTk.v;
 	assign InRegB_I_BTk.c	= ( PortB_O_InputData ) ? DataPath_BTkB.c : I_BTk.c;
+	BTk_t					InRegB_BTk_;
+	assign InRegB_BTk.n		= InRegB_BTk_.n | Full_Buff_B;
+	assign InRegB_BTk.t		= InRegB_BTk_.t;
+	assign InRegB_BTk.v		= InRegB_BTk_.v;
+	assign InRegB_BTk.c		= InRegB_BTk_.c;
 	DReg InRegB (
 		.clock(				clock						),
 		.reset(				reset						),
@@ -542,7 +552,7 @@ module ALU
 		.clock(				clock						),
 		.reset(				reset						),
 		.I_FTk(				In_Buff_FTkB				),
-		.O_BTk(				InRegB_BTk					),
+		.O_BTk(				InRegB_BTk_					),
 		.O_FTk(				OperandB					),
 		.I_BTk(				InRegB_I_BTk				),
 		.O_Empty(										),
@@ -550,10 +560,15 @@ module ALU
 	);
 
 	//	 Input Reg-C
-	assign InRegC_I_BTk.n	= ( PortC_O_InputData ) ? DataPath_BTkC.n | Full_Buff_C : I_BTk.n | PortC_O_Nack;
+	assign InRegC_I_BTk.n	= ( PortC_O_InputData ) ? DataPath_BTkC.n : I_BTk.n | PortC_O_Nack;
 	assign InRegC_I_BTk.t	= ( PortC_O_InputData ) ? DataPath_BTkC.t : I_BTk.t;
 	assign InRegC_I_BTk.v	= ( PortC_O_InputData ) ? DataPath_BTkC.v : I_BTk.v;
 	assign InRegC_I_BTk.c	= ( PortC_O_InputData ) ? DataPath_BTkC.c : I_BTk.c;
+	BTk_t					InRegC_BTk_;
+	assign InRegC_BTk.n		= InRegC_BTk_.n | Full_Buff_C;
+	assign InRegC_BTk.t		= InRegC_BTk_.t;
+	assign InRegC_BTk.v		= InRegC_BTk_.v;
+	assign InRegC_BTk.c		= InRegC_BTk_.c;
 	DReg InRegC (
 		.clock(				clock						),
 		.reset(				reset						),
@@ -575,7 +590,7 @@ module ALU
 		.clock(				clock						),
 		.reset(				reset						),
 		.I_FTk(				In_Buff_FTkC				),
-		.O_BTk(				InRegC_BTk					),
+		.O_BTk(				InRegC_BTk_					),
 		.O_FTk(				OperandC					),
 		.I_BTk(				InRegC_I_BTk				),
 		.O_Empty(										),

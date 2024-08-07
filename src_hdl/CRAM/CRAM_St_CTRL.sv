@@ -25,7 +25,8 @@ module CRAM_St_CTRL
 	parameter int WIDTH_LENGTH		= 8,
 	parameter int NumWordsLength	= 1,
 	parameter int NumWordsStride	= 1,
-	parameter int NumWordsBase		= 1
+	parameter int NumWordsBase		= 1,
+	parameter int EXTERN			= 0
 )(
 	input							clock,
 	input							reset,
@@ -227,14 +228,14 @@ module CRAM_St_CTRL
 			end
 			gET_CONFIG_ST: begin
 				if ( End_Set_StConfig ) begin
-					R_Req		<= 1'b0;
+					R_Req		<= EXTERN;
 					R_Acq		<= 1'b0;
 					FSM_StCore	<= gET_ATTRIB2_ST;
 				end
 			end
 			gET_ATTRIB2_ST: begin
 				if ( I_Valid & ~I_Nack & is_AuxData ) begin
-					R_Req		<= 1'b0;
+					R_Req		<= EXTERN;
 					R_Acq		<= 1'b0;
 					FSM_StCore	<= aCTIVE_ST;
 				end

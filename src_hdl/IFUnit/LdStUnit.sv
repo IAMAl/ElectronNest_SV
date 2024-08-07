@@ -137,7 +137,8 @@ module LdStUnit
 		.WIDTH_ADDR(		WIDTH_ADDR					),
 		.NumWordsLength(	1							),
 		.NumWordsStride(	1							),
-		.NumWordsBase(		1							)
+		.NumWordsBase(		1							),
+		.EXTERN(			1							)
 	) CRAM_St
 	(
 		.clock(				clock						),
