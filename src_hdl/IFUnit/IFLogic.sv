@@ -115,10 +115,10 @@ module IFLogic
 	//	 Send to CU
 	assign O_FTk				= ( R_Ld_Acvtive ) ?	W_O_FTk_IF	: '0;
 
-	assign W_I_BTk_IF.n			= ( R_Ld_Acvtive ) ?  	I_BTk.n | Ld_Buff_Full	: '0;
-	assign W_I_BTk_IF.t			= ( R_Ld_Acvtive ) ?  	I_BTk.t					: '0;
-	assign W_I_BTk_IF.v			= ( R_Ld_Acvtive ) ?  	I_BTk.v					: '0;
-	assign W_I_BTk_IF.c			= ( R_Ld_Acvtive ) ?  	I_BTk.c					: '0;
+	assign W_I_BTk_IF.n			= ( R_Ld_Acvtive ) ?  	I_BTk.n	: '0;
+	assign W_I_BTk_IF.t			= ( R_Ld_Acvtive ) ?  	I_BTk.t : '0;
+	assign W_I_BTk_IF.v			= ( R_Ld_Acvtive ) ?  	I_BTk.v	: '0;
+	assign W_I_BTk_IF.c			= ( R_Ld_Acvtive ) ?  	I_BTk.c	: '0;
 
 	//Ld-DReg <-> Ld-Buff
 	assign W_I_FTk_IF			= B_L_FTk_IF;
