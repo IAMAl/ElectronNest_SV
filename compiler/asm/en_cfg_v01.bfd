@@ -1,0 +1,319 @@
+########----ALU-Block----########
+####----Op-Size----####
+operator_pos_width 30
+width_b 0
+width_s 0
+width_w 0
+width_l 0
+operator_bit_width 2
+
+
+####----ALU-Type----####
+op_type_nop 0
+op_type_arith 0
+op_type_logic 0
+op_type_shift 0
+op_type_rotate 0
+op_type_convert 4
+op_type_compare 5
+
+####----Arithmetics----###
+operator_pos_arith 16
+
+operator_pos_arith_type 16
+operator_code_add 8192
+operator_code_sub 8193
+operator_code_mlt 16384
+operator_code_div 0
+operator_bit_arith 16
+
+unit_pos_arith 23
+unit_code_u 0
+unit_code_s 1
+unit_code_q 2
+unit_code_f 3
+unit_bits 2
+
+
+####----Logic----###
+operator_pos_logic 16
+
+operator_pos_logic_type 16
+operator_code_alw 8256
+operator_code_and 8257
+operator_code_or 8258
+operator_code_xor 8259
+operator_code_not 8260
+operator_code_nand 8261
+operator_code_nor 8262
+operator_code_xnor 8263
+operator_bit_logic 16
+
+
+####----Shift&Rotate----####
+operator_pos_shift 24
+operator_pos_shift_type 24
+
+operator_pos_shift_al 25
+shift_type_code_l 1
+shift_type_code_a 0
+shift_type_bit_al 1
+
+operator_pos_shift_lr 24
+shift_code_l 66
+shift_code_r 64
+shift_bit_lr 8
+
+operator_pos_rotate 24
+operator_pos_rotate_type 24
+
+operator_pos_rotate_lr 24
+rotate_code_l 67
+rotate_code_r 0
+rotate_bit_lr 8
+
+
+####----Convert----####
+operator_pos_convert 16
+operator_pos_convert_type 16
+
+operator_pos_convert_dst 25
+operator_pos_convert_src 23
+
+from_code_u 0
+from_code_s 1
+from_code_q 2
+from_code_f 3
+from_bit 2
+
+to_code_u 0
+to_code_s 1
+to_code_q 2
+to_code_f 3
+to_bit 2
+
+
+####----Compare----####
+operator_pos_compare 16
+
+operator_pos_compare_type 16
+operator_code_compare_eq 0
+operator_code_compare_gt 1
+operator_code_compare_le 2
+operator_code_compare_neq 3
+operator_bit_compare 2
+
+compare_pos_with 23
+compare_code_u 0
+compare_code_s 1
+compare_code_q 2
+compare_code_f 3
+compare_bit 2
+
+
+########----Route-Block----########
+####----Routing-Block----####
+route_pos_dir 0
+route_pos_length 16 
+
+direction_n 0
+direction_e 1
+direction_w 2
+direction_s 3
+port_1 4
+port_2 5
+route_bit_dir 6
+
+####----Connect----####
+connect_pos_dst 12
+connect_pos_src 0
+connect_bit 8
+
+connect_pos_ne_war 31
+connect_bit_ne_war 1
+
+
+
+########----Memory-Access-Block----########
+access_pos_width 30
+access_bit_width 2
+access_code_type 2
+access_bit_type 27
+
+memory_type_pos 25
+memory_type_e 0
+memory_type_r 1
+memory_type_b 2
+memory_type_bit 2
+
+access_option_pos 24
+access_option_zero 0
+access_option_sign 1
+access_option_bit 1
+
+access_bit_width 29
+access_bit_sign 2
+
+
+access_b_lenght_pos 18
+access_b_stride_pos 25
+access_b_base_address_pos 0
+
+access_b_bit_length 8
+access_b_bit_stride 6
+access_b_bit_base_address 18
+
+access_lenght_bit_pos 0
+access_stride_pos 0
+access_base_address_pos 0
+
+access_bit_length 32
+access_bit_stride 32
+access_bit_base_address 32
+
+access_b_block_length 1
+access_block_length 4
+
+
+
+
+####----Bit-field-Definition----####
+#operation_func_width:2bit
+#operation_func_width_pos:30
+#0:byte
+#1:short
+#2:word
+#3:long
+
+
+#operation_type:3bit
+#operation_type_pos:27
+#0:NOP
+#1:arithmetics
+#2:logic
+#3:shift/rotate
+#4:convert
+#5:compare
+#6:reserved
+#user-defined
+
+
+#func_type_pos:23
+#func_type:2bit(msb)
+#arithmetics
+#0:add
+#1:sub
+#2:mlt
+#3:div
+#logic
+#0:not
+#1:and
+#2:or
+#3:xor
+#shift/rotate
+#0:NOP
+#1:reserved
+#2:shift
+#3:rotate
+#compare
+#0:eq
+#1:gt
+#2:le
+#3:neq
+#convert-from
+#0:integer(unsigned)
+#1:integer(signed)
+#2:fixed-point
+#3:floating-point
+
+#func_type:2bit(lsb)
+#arithmetics&compare
+#0:integer(unsigned)
+#1:integer(signed)
+#2:fixed-point
+#3:floating-point
+#logic
+#0:thru
+#1:not
+#2:reserved
+#:reserved
+#shift(lmsb)
+#0:logical-shift
+#1:logical-arithmetic-shift
+#shift&rotate(llsb)
+#0:left
+#1:right
+#convert-to
+#0:integer(unsigned)
+#1:integer(signed)
+#2:fixed-point
+#3:floating-point
+
+#Second-Operation
+#operator_type:3bit
+#func_type:2bit(msb)
+#func_type:2bit(lsb)
+
+#constant:16bit
+#constant_pos:0
+
+
+####----Memory-Access----####
+#func_width:2bit
+#func_width_pos:30
+#0:byte
+#1:short
+#2:word
+#3:long
+
+#access_select:4bit
+#access_select_pos:24
+#1st-bit:load
+#2nd-bit:store
+
+
+########----Attribute-Word----########
+attrib_pull_pos 31
+attrib_code_pull 2
+attrib_bit_pull 2
+
+attrib_push_pos 30
+attrib_code_push 1
+attrib_bit_push 2
+
+attrib_pos_pushpull 30
+attrib_bit_pushpull 2
+
+attrib_type_pos 28
+attrib_code_data 0
+attrib_code_pe_cfg 1
+attrib_code_re_cfg 2
+attrib_code_route 3
+attrib_bit 2
+
+attrib_pos_my 24
+attrib_code_o 0
+attrib_code_m 1
+attrib_bit_my 1
+
+attrib_pos_term 23
+attrib_code_c 0
+attrib_code_t 1
+attrib_bit_term 1
+
+attrib_pos_block_length 8
+attrib_bit_block_length 8
+
+
+########----Header----########
+my_id_pos 0
+my_id_bit 32
+
+true_id_pos 0
+true_id_bit 32
+
+false_id_pos 0
+false_id_bit 32
+
+block_length_pos 8
+block_length_bit 8
