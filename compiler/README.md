@@ -1,4 +1,4 @@
-# CGRA Architecture and Compiler for Modern Computing
+# CGRA Compiler for Modern Computing
 ## Overview
 
 This project introduces a compiler targeting Coarse-Grained Reconfigurable Array (CGRA) architectures with on-chip memories. Our approach focuses on generating efficient address generation programs for array operations in loop sections, a critical aspect in modern data-intensive computing.
