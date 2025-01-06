@@ -172,9 +172,9 @@ class AGUGenerator:
 		return code
 
 	def _generate_memory_access(self, array_name: str, array_info: Dict, array_dims: List[int]) -> List[str]:
-		"""メモリアクセスコードの生成（GEP命令を連鎖的に使用）"""
+		"""任意の次元数に対応したメモリアクセスコードの生成"""
 		code = []
-
+		
 		# インデックスレジスタのロード
 		for reg in array_info['array_info']['index_regs']:
 			code.extend([
@@ -182,31 +182,43 @@ class AGUGenerator:
 				f"%{reg.replace('%', '')}.val = load i32, i32* {reg}, align 4"
 			])
 
-		# 次元ごとのGEP命令を生成
-		index_regs = array_info['array_info']['index_regs']
+		# 型文字列の構築（内側から外側へ）
+		base_type = "i32"
+		current_type = base_type
+		for dim_size in reversed(array_dims):
+			current_type = f"[{dim_size} x {current_type}]"
+		
+		# 最初のGEP（最外次元のポインタ）
+		current_ptr = f"@{array_name}"
+		current_type_ptr = f"{current_type}*"
+		
+		# 各次元に対してGEP命令を生成
+		for i, reg in enumerate(array_info['array_info']['index_regs']):
+			reg_val = f"%{reg.replace('%', '')}.val"
+			
+			# 次の型を計算（1次元分減らす）
+			next_type = current_type.replace(f"[{array_dims[i]} x ", "", 1)[:-1]
+			ptr_name = f"%ptr_{i}"
+			
+			code.append(
+				f"{ptr_name} = getelementptr inbounds {current_type}, "
+				f"{current_type_ptr} {current_ptr}, i32 0, i32 {reg_val}"
+			)
+			
+			# 次のイテレーションの準備
+			current_ptr = ptr_name
+			current_type = next_type
+			current_type_ptr = f"{current_type}*"
 
-		# 1. 最初のGEP（行のポインタを取得）
-		row_type = f"[32 x [32 x i32]]"
-		code.append(
-			f"%row_ptr = getelementptr inbounds {row_type}, {row_type}* @{array_name}, "
-			f"i32 0, i32 %{index_regs[0].replace('%', '')}.val"
-		)
-
-		# 2. 次のGEP（列のポインタを取得）
-		col_type = f"[32 x i32]"
-		code.append(
-			f"%elem_ptr = getelementptr inbounds {col_type}, {col_type}* %row_ptr, "
-			f"i32 0, i32 %{index_regs[1].replace('%', '')}.val"
-		)
-
-		# load/store操作の生成
+		# 最終ポインタに対するload/store操作
 		ops = array_info['array_info']['operations']
+		final_ptr = current_ptr
+		
 		if ops['has_load']:
-			code.append(f"%loaded.val = load i32, i32* %elem_ptr, align 4")
+			code.append(f"%loaded.val = load i32, i32* {final_ptr}, align 4")
 		if ops['has_store']:
-			code.append(f"store i32 %loaded.val, i32* %elem_ptr, align 4")
+			code.append(f"store i32 %loaded.val, i32* {final_ptr}, align 4")
 
-		return code
 
 	def _generate_loop_exit(self, level: str) -> List[str]:
 		"""ループ終了コードの生成"""
