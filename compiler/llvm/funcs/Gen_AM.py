@@ -49,6 +49,18 @@ def ZeroRemover( am ):
     return am
 
 
+def Get_Dst(dot_lines, opcode):
+    for line in dot_lines:
+        chk_opcode = line[1]
+        if chk_opcode == opcode:
+            if len(line) > 2:
+                return line[2]
+            else:
+                return "None"
+    return "None"
+
+
+
 def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_path=".", r_file_name="", w_file_path=".", w_file_name="" ):
     """
     Adjacency Matrix Composer
@@ -74,7 +86,6 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
         for present_line in dot_file:
 
             present_line = present_line.split(' -> ')
-            print(f"present_line:{present_line}")
 
             tmp_line = []
             if len(present_line) > 1:
@@ -82,18 +93,24 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 if len(present_line[1]) > 1:
                     tmp = present_line[1][1].split(' label=')
                     if len(tmp) > 1:
+                        dst =  Get_Dst(dot_lines, present_line[1][0])
                         tmp_line.append(present_line[1][0])
-                        tmp = tmp[1][1:len(tmp)-4]
                         tmp_line.append(present_line[0])
+                        tmp = tmp[1][1:len(tmp)-4]
                         tmp_line.append(tmp)
+                        tmp_line.append(dst)
                         present_line = tmp_line
                     else:
+                        dst =  Get_Dst(dot_lines, present_line[1][0])
                         tmp_line.append(present_line[1][0])
                         tmp_line.append(present_line[0])
+                        tmp_line.append(dst)
                         present_line = tmp_line
                 else:
+                    dst =  Get_Dst(dot_lines, present_line[0])
                     tmp_line.append(present_line[0])
                     tmp_line.append(present_line[1][0])
+                    tmp_line.append(dst)
                     present_line = tmp_line
             elif len(present_line) > 0:
                 present_line[0] = present_line[0].split('[')[0]
@@ -120,10 +137,15 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
         dst_node = nodes[0].replace('"', '')
         src_node = nodes[1].replace('"', '')
 
-        if len(nodes) > 2:
+        if len(nodes) > 3:
             src_index = nodes[2].replace('"', '')
+            dst_index = nodes[-1].replace('"', '')
+        elif len(nodes) > 2:
+            src_index = nodes[1].replace('"', '')
+            dst_index = nodes[-1].replace('"', '')
         elif len(nodes) > 1:
             src_index = nodes[1].replace('"', '')
+            dst_index = "SINK"
         else:
             src_index = "LEAF"
 
@@ -131,42 +153,34 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
         # Register Node to List
         find_dst = False
         index = 0
-        #print("check 2nd-source for Node:{}".format(dst_node))
         for index, node in enumerate(node_list):
-            #print("check Node:{} having {}".format(node[1], src_index))
             if node[1] == dst_node:
-                #print("2nd find: Node:{} at {} in Node-List".format(dst_node, index))
                 find_dst = True
                 break
 
         find_src = False
         if not find_dst:
             if not no in src_found_list:
-                #print("not find:{}(id-{}), {}".format(dst_node, no, src_index))
-                #print("dst list:{}".format(dst_found_list))
                 dst_found_list.append(no)
-                node_list.append([no, dst_node, src_index])
-                #print("add 1st source:{}".format(node_list))
+                node_list.append([no, dst_node, src_index, dst_index])
                 find_src = True
 
 
         # Check 2nd Source, add 2nd Source to List-entry if available
         if find_dst:# and not no in src_found_list and not find_src:
             if len(nodes) > 1:
-                #print("find: Node:{}".format(chk_node_code))
-                if len(node_list[index]) > 2:
+                if len(node_list[index]) > 3:
+                    node_list[index] = node_list[index][:len(node_list[index])-1]+[src_index]+[node_list[index][len(node_list[index])-1]]
+                elif len(node_list[index]) > 2:
                     node_list[index] = node_list[index]+[" "+src_index]
-                    #print("add 2nd source:{}".format(node_list[index]))
-
 
         # Check Node in Source
         find = False
         src_node = nodes[1]
-        for index, dst_nodes in enumerate(dot_lines[no+1:]):
+        for index, dst_nodes in enumerate(dot_lines[no+1:len(dot_lines)-1]):
             if dst_nodes[0] == src_node:
                 find = True
                 break
-
 
         # Register
         if not find:
@@ -176,7 +190,7 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
             for no_ in leaf_node_list:
                 if src_node == no_[1]:
                     find = True
-            if not find:
+            if not find and not "load" in src_node:
                 src_found_list.append(no)
                 leaf_node_list.append([ no, src_node, "LEAF" ])
 
@@ -185,19 +199,19 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
     for no, node in enumerate(node_list):
         node_list[no][0] = no
 
-    #print(node_list)
-
     # Append Leaf-Node to Node-List
     node_list_ = node_list
     len_entry = len(node_list)
+    count = 0
     for index, leaf_node in enumerate(leaf_node_list):
         find = False
         for node in node_list_:
             if node[0] is leaf_node[1]:
                 find = True
 
-        if not find:
-            node_list.append([len_entry+index, leaf_node[1], leaf_node[2]])
+        if not find and "load" not in leaf_node[1]:
+            node_list.append([len_entry+count, leaf_node[1], leaf_node[2]])
+            count += 1
 
     #print(node_list)
 
@@ -209,11 +223,18 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
             # Write dst Node
             node[1] = node[1].replace('\"','')
             node_list_file.write(str(node[0])+" "+node[1])
+            print(node)
 
             # Write src Edge
-            if len(node) > 3 and mode == "dst_append":
+            if len(node) > 4 and mode == "dst_append":
                 node[2] = node[2].replace('\"','')
-                node_list_file.write(" "+node[2]+node[3]+"\n")
+                node_list_file.write(" "+node[4]+" "+node[2]+" "+node[3]+"\n")
+            elif len(node) > 3 and mode == "dst_append":
+                node[2] = node[2].replace('\"','')
+                node_list_file.write(" "+node[3]+" "+node[2]+"\n")
+            elif len(node) > 2 and mode == "dst_append":
+                node[2] = node[2].replace('\"','')
+                node_list_file.write(" None "+node[2]+"\n")
             else:
                 node_list_file.write(" "+node[2]+"\n")
 
@@ -239,7 +260,6 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 break
 
         if src_find and dst_find:
-            # print("find[{}][{}]".format(src_no, dst_no))
             iam[src_no][dst_no] = 1
             iam[dst_no][src_no] = 1
 
@@ -253,9 +273,6 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 zero_rows.append(index)
             else:
                 iam_.append(irow.tolist())
-                #print(irow)
-
-        #print(zero_rows)
 
         iam = []
         for index, irow in enumerate(iam_):
@@ -264,9 +281,7 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 irow.pop(zero_index-cnt)
                 cnt += 1
 
-
             iam.append(irow)
-            #print(irow)
 
     iam = np.array(iam)
 
@@ -283,12 +298,19 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
         for index, node in enumerate(node_list):
             # Write dst Node
             node[1] = node[1].replace('\"','')
+            print(f"{node[0]} dst:{node[1]}")
             node_list_file.write(str(len(node_list) - node[0])+" "+node[1])
 
             # Write src Edge
-            if len(node) > 3 and mode == "dst_append":
+            if len(node) > 4 and mode == "dst_append":
                 node[2] = node[2].replace('\"','')
-                node_list_file.write(" "+node[2]+node[3]+"\n")
+                node_list_file.write(" "+node[4]+" "+node[2]+" "+node[3]+"\n")
+            elif len(node) > 3 and mode == "dst_append":
+                node[2] = node[2].replace('\"','')
+                node_list_file.write(" "+node[3]+" "+node[2]+"\n")
+            elif len(node) > 2 and mode == "dst_append":
+                node[2] = node[2].replace('\"','')
+                node_list_file.write(" None "+node[2]+"\n")
             else:
                 node_list_file.write(" "+node[2]+"\n")
 
@@ -300,9 +322,15 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
             node_list_file.write(str(node[0])+" "+node[1])
 
             # Write src Edge
-            if len(node) > 3 and mode == "dst_append":
+            if len(node) > 4 and mode == "dst_append":
                 node[2] = node[2].replace('\"','')
-                node_list_file.write(" "+node[2]+node[3]+"\n")
+                node_list_file.write(" "+node[4]+" "+node[2]+" "+node[3]+"\n")
+            elif len(node) > 3 and mode == "dst_append":
+                node[2] = node[2].replace('\"','')
+                node_list_file.write(" "+node[3]+" "+node[2]+"\n")
+            elif len(node) > 2 and mode == "dst_append":
+                node[2] = node[2].replace('\"','')
+                node_list_file.write(" None "+node[2]+"\n")
             else:
                 node_list_file.write(" "+node[2]+"\n")
 
@@ -326,7 +354,6 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 break
 
         if src_find and dst_find:
-            # print("find[{}][{}]".format(src_no, dst_no))
             am[src_no][dst_no] = 1
             am[dst_no][src_no] = 1
 
@@ -339,9 +366,6 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 zero_rows.append(index)
             else:
                 am_.append(irow.tolist())
-                #print(irow)
-
-        #print(zero_rows)
 
         am = []
         for index, irow in enumerate(am_):
@@ -352,7 +376,6 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
 
 
             am.append(irow)
-            #print(irow)
 
     am = np.array(am)
 

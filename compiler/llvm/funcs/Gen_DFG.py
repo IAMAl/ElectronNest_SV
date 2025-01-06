@@ -344,15 +344,12 @@ def BlockDataFlowExtractor( prog, MNEMONIC_MODE, UNIQUE_ID ):
                 g.start_df_graph()
 
                 num_instrs = bblock.num_instrs
-                #print("BBlock: {}".format(name_bblock))
                 for no_instr in range(num_instrs - 1, -1, -1):
 
                     instr = bblock.instrs[no_instr]
                     dst_name = instr.dst
                     operands = instr.operands
                     imm = instr.imm
-
-                    #print("dst {} {}".format(dst_name, instr.opcode))
 
                     if len(operands) > 1:
                         src2_name = operands[1]
@@ -381,7 +378,6 @@ def BlockDataFlowExtractor( prog, MNEMONIC_MODE, UNIQUE_ID ):
 
                     if len(operands) > 0:
                         src1_name = operands[0]
-                        #print("src1 {}".format(src1_name))
                         find = False
                         for search_no in range(no_instr-1, -1, -1):
                             search_instr = bblock.instrs[search_no]
@@ -419,9 +415,8 @@ def BlockDataFlowExtractor( prog, MNEMONIC_MODE, UNIQUE_ID ):
             name_bblock = bblock.name
 
             with open(name_func+"_bblock_"+name_bblock+"_operands.txt", "w") as block_dfg:
-                
+                print(f"bblock:{name_bblock}")
                 num_instrs = bblock.num_instrs
-                #print("BBlock: {}".format(name_bblock))
                 for no_instr in range(num_instrs - 1, -1, -1):
 
                     instr = bblock.instrs[no_instr]
@@ -430,14 +425,21 @@ def BlockDataFlowExtractor( prog, MNEMONIC_MODE, UNIQUE_ID ):
                     imm = instr.imm
 
                     if dst_name == None:
-                        dst_name = 'None'
+                        if 'br' in instr.opcode:
+                            dst_name = src1_name = operands[0]
+                        if 'store' in instr.opcode:
+                            dst_name = src1_name = operands[0]
+                        else:
+                            dst_name = 'None'
                         
-                    #print("dst {} {}".format(dst_name, instr.opcode))
 
                     if len(operands) > 1:
-                        src1_name = operands[0]
-                        src2_name = operands[1]
-                        #print("src1 {} src2 {}".format(src2_name, src2_name))
+                        if 'br' in instr.opcode:
+                            src1_name = instr.br_t
+                            src2_name = instr.br_f
+                        else:
+                            src1_name = operands[0]
+                            src2_name = operands[1]
                         find = False
                         for search_no in range(no_instr-1, -1, -1):
                             search_instr = bblock.instrs[search_no]
@@ -445,9 +447,32 @@ def BlockDataFlowExtractor( prog, MNEMONIC_MODE, UNIQUE_ID ):
                             if search_dst == src2_name:
                                 find = True
                                 block_dfg.write(instr.opcode+"_"+str(no_instr+no_offset)+" "+dst_name+" "+src1_name+" "+src2_name+"\n")
-
+                                instr.opcode
+                        
                         if not find:
                             block_dfg.write(instr.opcode+"_"+str(no_instr+no_offset)+" "+dst_name+" "+src2_name+" "+src1_name+"\n")
-
+                    elif len(operands) > 0:
+                        if 'br' in instr.opcode:
+                            src1_name = instr.br_t
+                            src2_name = instr.br_f
+                        else:
+                            src1_name = operands[0]
+                        find = False
+                        for search_no in range(no_instr-1, -1, -1):
+                            search_instr = bblock.instrs[search_no]
+                            search_dst = search_instr.dst
+                            if search_dst == src2_name:
+                                find = True
+                                block_dfg.write(instr.opcode+"_"+str(no_instr+no_offset)+" "+dst_name+" "+src1_name+"\n")
+                        
+                        if not find:
+                            block_dfg.write(instr.opcode+"_"+str(no_instr+no_offset)+" "+dst_name+" "+src2_name+" "+src1_name+"\n")
+                    elif 'jmp' in instr.opcode:
+                        src1_name = instr.br_t
+                        find = False
+                        print(instr.opcode)
+                        find = True
+                        block_dfg.write("br_"+str(no_instr+no_offset)+" "+src1_name+"\n")
+                        
                 if UNIQUE_ID:
                     no_offset += num_instrs

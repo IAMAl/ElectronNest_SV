@@ -1,0 +1,25 @@
+br_51 label:<46>
+store_50 %45 %45 %43
+add_49 %45 %44 %37
+load_48 %44 %43
+getelementptr_%40_47 %43 %40 %42
+sext_46 %42 %42 %41
+load_45 %41 %42 %3
+getelementptr_@c_44 %40 %42 %39
+sext_43 %39 %42 %38
+load_42 %38 %42 %2
+mul_41 %37 %29 %36
+load_40 %36 %36 %35
+getelementptr_%32_39 %35 %32 %34
+sext_38 %34 %34 %33
+load_37 %33 %34 %3
+getelementptr_@b_36 %32 %34 %31
+sext_35 %31 %34 %30
+load_34 %30 %34 %4
+load_33 %29 %34 %28
+getelementptr_%25_32 %28 %25 %27
+sext_31 %27 %27 %26
+load_30 %26 %27 %4
+getelementptr_@a_29 %25 %27 %24
+sext_28 %24 %27 %23
+load_27 %23 %27 %2

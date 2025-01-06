@@ -1,0 +1,12 @@
+There is no difference in the output files;Simply copying and pasting instructions.
+- doing without tracking path(s), in basic blocks related to array, used for the branch instruction (branch <- compare <- instructions ONLY for updating the index).
+- doing without tracking load-to-load and load-to-leaf paths to load/store array element scalar data.
+- need load/store instruction for array element data, not only index handling (why the index is needed).
+- you forget a register index or immediate constant at leaf node of load-to-leaf is array's pointer, multi-dimensional array takes multiple getelementptr instructions to get particular memory address of target element scalar data, so reason why load instruction for element, load-to-load path, load-to-lead path are needed.
+- you get which registers are used as a pointer by tracking the load-to-leaf path.
+- you get which basic block(s) is a core block by tracking control-flow graph.
+
+And you consume limits by:
+- you often forget that we focus on general-purpose.
+- you often update unnecessary method.
+easily reaches to the limit and I must wait 4 hours.

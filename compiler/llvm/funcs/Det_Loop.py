@@ -14,7 +14,6 @@ import utils.GraphUtils as graphutils
 def TranslateNode(r_file_name, CyclicEdges):
 
     node_list = graphutils.ReadNodeList(r_file_name)
-    #print(f"node_list:{node_list}")
 
     CyclicEdges_ = []
     for cycle_path in CyclicEdges:
@@ -26,8 +25,6 @@ def TranslateNode(r_file_name, CyclicEdges):
                     node_id = node[1]
                     path.append(node_id)
                     break
-
-            #print(path)
 
         CyclicEdges_.append(path)
 
@@ -64,7 +61,6 @@ def is_Loop( ptr, addr, Paths ):
 
 def is_NotTerm( Paths ):
     for path in Paths:
-        #print(f">>>> len(path[2]) : {len(path[2]) } > path[1] : {path[1]+1}")
         if len(path[2]) > (path[1]+1):
             return False
 
@@ -80,20 +76,14 @@ def RollBack(target_id, ptr, prev_ptr, Paths):
         check_len = len(check_srcs)
 
         if target_id in check_srcs:
-            #print(f"    Found target node {target_id}: compare {len(check_srcs)} and {check_addr+1}")
             if len(check_srcs) <= (check_addr+1):
-                #print(f"    Already exlpored, go back more")
                 target_id = check_id
                 back_ptr = RollBack(target_id, check_ptr, ptr, Paths)
                 back_node_id = Paths[back_ptr][0]
-                #print(f"    This node {back_node_id} is roll back node")
                 return back_ptr
             else:
                 back_node_id = Paths[check_ptr][0]
-                #print(f"    This node {back_node_id} is roll back node")
                 return check_ptr
-
-        # roll back more
 
     return ptr
 
@@ -107,7 +97,6 @@ def GetPtr( node_id, Paths ):
 
 
 def GetPath( node_id1, node_id2, PathStack ):
-    #print(f"PathStack:{PathStack}, node_id1:{node_id1}, node_id2:{node_id2}")
     if node_id1 in PathStack:
         if node_id2 in PathStack:
             index1 = PathStack.index( node_id1 )
