@@ -13,7 +13,7 @@
 - input: LLVM IR file
 - output: LLVM IR file (address generation program)
 
-Currently the backend generates only address generation program described by LLVM IR.
+Currently the frontend generates only address generation program described by LLVM IR.
 But the compilation has lots of path information and control-flow information, thus such the propaties can be used for constructing datapath and scheduling, repspectively.
 
 **License: AGPL**
