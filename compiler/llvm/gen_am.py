@@ -48,12 +48,10 @@ if GEN_DFG:
     prog = progfile.ProgReader( r_file_path=r_file_path, r_file_name=r_file_name)
 
     for func in prog.funcs:
-        name_func = func.name.replace('\n', '')
-        #print("Func:{}".format(name_func))
+        name_func = r_file_name
 
         for bblock in func.bblocks:
             name_bblock = bblock.name.replace('\n', '')
-            #print("BBlock:{}".format(name_bblock))
 
             r_file_name = name_func+"_bblock_"+name_bblock+"_dfg"
             w_file_name = name_func+"_bblock_"+name_bblock
