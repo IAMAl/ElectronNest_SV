@@ -7,12 +7,12 @@
 ##	version 3.0
 ##
 ##################################################################
-
 import utils.IRPaser as irparser
 import utils.FileUtils as progfile
 import funcs.Gen_DFG as Gen_DFG
 import funcs.Gen_CFG as Gen_CFG
 import argparse
+
 
 open('utils/__init__.py', 'a').close()
 

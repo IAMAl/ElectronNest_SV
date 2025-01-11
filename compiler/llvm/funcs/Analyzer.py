@@ -1,3 +1,12 @@
+##################################################################
+##
+##	ElectronNest_CP
+##	Copyright (C) 2024  Shigeyuki TAKANO
+##
+##  GNU AFFERO GENERAL PUBLIC LICENSE
+##	version 3.0
+##
+##################################################################
 from typing import TypedDict, List, Dict, Tuple, Optional, Set, Union, Any
 from dataclasses import dataclass
 import os
@@ -6,42 +15,43 @@ import re
 from typing import List, Optional
 import functools
 
+
 @dataclass
 class RegisterInfo:
-	regs: List[str]			# レジスタ名のリスト
-	array_dim: int			# 配列次元数
+	regs: List[str]			# Register's name
+	array_dim: int			# Array Dimension
 
 @dataclass
 class PointerInfo:
-	block_id: str			# 基本ブロックID
-	gep_node_id: List[str]	# getelementptrノードID
-	array_name: str			# 配列名
+	block_id: str			# Basic Block ID
+	gep_node_id: List[str]	# getelementptr Node-ID
+	array_name: str			# Array Name
 	index_regs: RegisterInfo
 
 @dataclass
 class MemoryOp:
-	reg_addr: str			# アドレスレジスタ
-	reg_val: str			# 値レジスタ
+	reg_addr: str			# Register index used for Address
+	reg_val: str			# REgister index used for Value
 
 @dataclass
 class LoopInfo:
-	nodes: List[str]		# ループノード
-	header: str				# ループヘッダ
-	exit: str				# 出口ノード
-	parent: str				# 親ループID
-	children: List[str]		# 子ループID
-	array_dims: Dict[str, int]	# {配列名: アクセスする次元} を追加
+	nodes: List[str]		# Loop CFG Nodes
+	header: str				# Loop Header
+	exit: str				# Exit Node
+	parent: str				# Parent Node-ID
+	children: List[str]		# Child Node-ID
+	array_dims: Dict[str, int]	# {Array Name: Access Dim}
 
 @dataclass
 class DimensionAccess:
-	dimension: int			# アクセスする次元
-	loop_level: str			# 対応するループレベル
-	array_size: int			# その次元のサイズ
+	dimension: int			# Access Dim
+	loop_level: str			# Loop Level
+	array_size: int			# Dim Size
 
 @dataclass
 class ArrayDimInfo:
-	array_name: str						# 配列名
-	dim_accesses: List[DimensionAccess]	# 次元アクセス情報
+	array_name: str						# Array Name
+	dim_accesses: List[DimensionAccess]	# Dim Info
 
 class IndexExpression:
 	base: str					# Base address of the array
@@ -771,7 +781,6 @@ class Analyzer:
 				node = node[0].split()
 				if len(node) > 1:
 					if 'load' in node[1]:
-						#Check if this load is related to any of the pointer registers
 						for pointer_reg in pointer_regs:
 							if pointer_reg["block_id"] == block_id:
 								for index_reg in pointer_reg["index_regs"]["regs"]:
@@ -779,7 +788,6 @@ class Analyzer:
 										mem_ops['loads'].append({'line_num': line_num})
 										break
 					elif 'store' in node[1]:
-						#Check if this store is related to any of the pointer registers
 						for pointer_reg in pointer_regs:
 							if pointer_reg["block_id"] == block_id:
 								for index_reg in pointer_reg["index_regs"]["regs"]:
@@ -828,7 +836,6 @@ class Analyzer:
 						if not array_access:
 							continue
 
-						# Construct IndexExpression here
 						index_regs = pointer_regs['index_regs']['regs']
 						index_expressions = []
 						for index_reg in index_regs:
@@ -843,10 +850,9 @@ class Analyzer:
 								)
 								index_expressions.append(index_expression)
 
-						# Use IndexExpression in _build_forward_path
 						current_path = {
 							'blocks': [],
-							'index_expressions': index_expressions, # Store IndexExpression objects
+							'index_expressions': index_expressions,
 							'mem_ops': {},
 							'store_deps': {},
 							'is_loop_path': False,
@@ -960,7 +966,7 @@ class Analyzer:
 			path = []
 			current_reg = index_reg
 			current_block = start_block
-			visited_nodes = set()  # To avoid infinite loop.
+			visited_nodes = set()
 
 			while True:
 				nodes_in_block = self.all_nodes.get(current_block)  # current_blockを使用
@@ -973,19 +979,18 @@ class Analyzer:
 					node = node[0].split()
 					if (current_block, node_id) in visited_nodes:
 						print(f"Warning: Already visited node: {(current_block, node_id)}, possible loop in data flow")
-						return None  # Avoid infinite loop.
+						return None
 					visited_nodes.add((current_block, node_id))
 
-					if len(node) > 2 and current_reg == node[1]:  # Check if reg is defined here
+					if len(node) > 2 and current_reg == node[1]:
 						path.append(node_id)
 						if "phi" in node[0]:  # node[1]ではなくnode[0]をチェック
-							# Determine the correct incoming value based on CFG
 							incoming_block = self._get_phi_incoming_block(current_block, node, cfg_connectivity)
 							if incoming_block:
 								current_block = incoming_block
 								for operand in node[2:]:
 									if operand.startswith("%") and operand != current_reg:
-										current_reg = operand  # Get the register from the incoming block.
+										current_reg = operand
 										found_definition = True
 										break
 								if not found_definition: #phiノードのオペランドに%で始まるものがなかった場合
@@ -994,7 +999,7 @@ class Analyzer:
 								break
 							else:
 								print(f"Warning: Incoming block not found for phi node in block {current_block}: {node}")
-								return None  # If incoming block is not found, return None.
+								return None
 						elif any(op in node[0] for op in ['add', 'sub', 'mul', 'sext', 'zext', 'trunc', 'shl', 'ashr', 'lshr', 'and', 'or', 'xor']):
 							for operand in node[2:]:
 								if operand.startswith('%'):
@@ -1017,8 +1022,9 @@ class Analyzer:
 							if found_definition:
 								break
 						else:
-							return path		# If not calculation, load or phi, end of path.
-				if not found_definition:	# If not found in the same block, find in the previous block.
+							return path
+
+				if not found_definition:
 					prev_block = self._get_previous_block(current_block, loop_blocks, cfg_connectivity)
 					if prev_block:
 						current_block = prev_block
@@ -1084,7 +1090,6 @@ class Analyzer:
 						if not array_access:
 							continue
 
-						# Construct IndexExpression here
 						index_regs = pointer_regs['index_regs']['regs']
 						index_expressions = []
 						for index_reg in index_regs:
@@ -1099,10 +1104,9 @@ class Analyzer:
 								)
 								index_expressions.append(index_expression)
 
-						# Use IndexExpression in _build_forward_path
 						current_path = {
 							'blocks': [],
-							'index_expressions': index_expressions, # Store IndexExpression objects
+							'index_expressions': index_expressions,
 							'mem_ops': {},
 							'store_deps': {},
 							'is_loop_path': False,
@@ -1170,7 +1174,6 @@ class Analyzer:
 		try:
 			current_index = loop_nodes.index(current_node)
 
-			# outgoing dependencies
 			for store_line, store_op in stores.items():
 				for next_node in loop_nodes[current_index + 1:]:
 					dependent_loads = self._find_dependent_loads(next_node, store_op.reg_addr, store_line, current_node, "", "", "")
@@ -1191,7 +1194,6 @@ class Analyzer:
 			current_index = loop_nodes.index(current_node)
 
 			for store_line, store_op in stores.items():
-				# forward dependencies
 				if current_node == start_node:
 					dependent_loads = self._find_dependent_loads(end_node, store_op.reg_addr, store_line, current_node, "", start_node, end_node, is_loop_forward=True)
 					if dependent_loads:
@@ -1200,7 +1202,6 @@ class Analyzer:
 							'to': {'node': end_node, 'loads': dependent_loads}
 						})
 
-				# backward dependencies
 				if current_node == end_node:
 					dependent_loads = self._find_dependent_loads(start_node, store_op.reg_addr, store_line, current_node, "", start_node, end_node, is_loop_back=True)
 					if dependent_loads:
@@ -1766,6 +1767,7 @@ class Analyzer:
 								if reg not in registers:
 									registers.append(reg)
 			return registers
+
 		except Exception:
 			return registers
 
@@ -1786,6 +1788,7 @@ class Analyzer:
 									'block': str(src_idx)
 								}
 			return None
+
 		except Exception:
 			return None
 

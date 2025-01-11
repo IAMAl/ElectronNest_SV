@@ -7,10 +7,10 @@
 ##	version 3.0
 ##
 ##################################################################
-
 import utils.FileUtils as progfile
 import funcs.Gen_AM as Gen_AM
 import argparse
+
 
 open('utils/__init__.py', 'a').close()
 

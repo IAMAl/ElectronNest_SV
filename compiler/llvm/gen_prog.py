@@ -1,8 +1,18 @@
+##################################################################
+##
+##	ElectronNest_CP
+##	Copyright (C) 2024  Shigeyuki TAKANO
+##
+##  GNU AFFERO GENERAL PUBLIC LICENSE
+##	version 3.0
+##
+##################################################################
 import os
 import sys
 import argparse
 import funcs.Analyzer as analyzis
 import funcs.Gen_Prog as gen_prog
+
 
 def verify_paths(src_path, w_path):
 	"""Verify input/output paths exist"""

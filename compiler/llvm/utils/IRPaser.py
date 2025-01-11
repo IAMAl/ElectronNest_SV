@@ -7,7 +7,6 @@
 ##	version 3.0
 ##
 ##################################################################
-
 import utils.InstrTypeChecker as type
 import utils.ProgConstructor as progconst
 import copy

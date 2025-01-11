@@ -7,9 +7,9 @@
 ##	version 3.0
 ##
 ##################################################################
-
 import funcs.MergeCFGNodes as MergeCFGNodes
 import argparse
+
 
 open('utils/__init__.py', 'a').close()
 

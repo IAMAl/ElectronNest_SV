@@ -1,5 +1,16 @@
+##################################################################
+##
+##	ElectronNest_CP
+##	Copyright (C) 2024  Shigeyuki TAKANO
+##
+##  GNU AFFERO GENERAL PUBLIC LICENSE
+##	version 3.0
+##
+##################################################################
 import os
 from typing import TypedDict, List, Dict, Tuple, Optional, Set, Union, Any
+
+
 class AGUGenerator:
 
 	def __init__(self, array_patterns, r_file_path, r_name, IndexExpression):
@@ -174,7 +185,7 @@ class AGUGenerator:
 	def _generate_memory_access(self, array_name: str, array_info: Dict, array_dims: List[int]) -> List[str]:
 		"""任意の次元数に対応したメモリアクセスコードの生成"""
 		code = []
-		
+
 		# インデックスレジスタのロード
 		for reg in array_info['array_info']['index_regs']:
 			code.extend([
@@ -187,24 +198,24 @@ class AGUGenerator:
 		current_type = base_type
 		for dim_size in reversed(array_dims):
 			current_type = f"[{dim_size} x {current_type}]"
-		
+
 		# 最初のGEP（最外次元のポインタ）
 		current_ptr = f"@{array_name}"
 		current_type_ptr = f"{current_type}*"
-		
+
 		# 各次元に対してGEP命令を生成
 		for i, reg in enumerate(array_info['array_info']['index_regs']):
 			reg_val = f"%{reg.replace('%', '')}.val"
-			
+
 			# 次の型を計算（1次元分減らす）
 			next_type = current_type.replace(f"[{array_dims[i]} x ", "", 1)[:-1]
 			ptr_name = f"%ptr_{i}"
-			
+
 			code.append(
 				f"{ptr_name} = getelementptr inbounds {current_type}, "
 				f"{current_type_ptr} {current_ptr}, i32 0, i32 {reg_val}"
 			)
-			
+
 			# 次のイテレーションの準備
 			current_ptr = ptr_name
 			current_type = next_type
@@ -213,12 +224,13 @@ class AGUGenerator:
 		# 最終ポインタに対するload/store操作
 		ops = array_info['array_info']['operations']
 		final_ptr = current_ptr
-		
+
 		if ops['has_load']:
 			code.append(f"%loaded.val = load i32, i32* {final_ptr}, align 4")
 		if ops['has_store']:
 			code.append(f"store i32 %loaded.val, i32* {final_ptr}, align 4")
 
+		return code
 
 	def _generate_loop_exit(self, level: str) -> List[str]:
 		"""ループ終了コードの生成"""

@@ -7,12 +7,12 @@
 ##	version 3.0
 ##
 ##################################################################
-
 import utils.FileUtils as fileutils
 import utils.AMUtils as amutils
 import utils.GraphUtils as graphutils
 import funcs.Gen_Path as genpath
 import argparse
+
 
 open('utils/__init__.py', 'a').close()
 
