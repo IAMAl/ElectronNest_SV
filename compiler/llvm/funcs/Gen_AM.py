@@ -59,7 +59,6 @@ def Get_Dst(dot_lines, opcode):
     return "None"
 
 
-
 def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_path=".", r_file_name="", w_file_path=".", w_file_name="" ):
     """
     Adjacency Matrix Composer
@@ -122,7 +121,7 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
                 dot_lines.append(present_line)
 
 
-    print(dot_lines)
+    #print(dot_lines)
 
 
     # Node-ID Composition
@@ -222,7 +221,7 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
             # Write dst Node
             node[1] = node[1].replace('\"','')
             node_list_file.write(str(node[0])+" "+node[1])
-            print(node)
+            #print(node)
 
             # Write src Edge
             if len(node) > 4 and mode == "dst_append":
@@ -382,4 +381,3 @@ def AMComposer( ZERO_REMOVE=False, mode="dst_append", zero_remove=False, r_file_
     openfile = w_file_path +"/"+ w_file_name+"_am.txt"
     with open(openfile, "w") as am_file:
         am_file.writelines(str(am))
-

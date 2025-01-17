@@ -29,9 +29,9 @@ loop.body.2:
 %3.val = load i32, i32* %3, align 4
 ; Access using %4
 %4.val = load i32, i32* %4, align 4
-%row_ptr = getelementptr inbounds [32 x [32 x i32]], [32 x [32 x i32]]* @b, i32 0, i32 %3.val
-%elem_ptr = getelementptr inbounds [32 x i32], [32 x i32]* %row_ptr, i32 0, i32 %4.val
-%loaded.val = load i32, i32* %elem_ptr, align 4
+%ptr_0 = getelementptr inbounds [32 x [32 x i32]], [32 x [32 x i32]]* @b, i32 0, i32 %3.val
+%ptr_1 = getelementptr inbounds [32 x i32], [32 x i32]* %ptr_0, i32 0, i32 %4.val
+%loaded.val = load i32, i32* %ptr_1, align 4
 
 loop.exit.1:
 %i1.next = add i32 %i1.load, 1

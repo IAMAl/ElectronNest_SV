@@ -45,6 +45,7 @@ def Get_Neighbors( my_no, am_size, am, ng_id ):
     else:
         return []
 
+
 def is_Loop( ptr, addr, Paths ):
     Find = False
     NNodes = Paths[ptr][2][addr:]
@@ -228,10 +229,10 @@ def CycleDetector( am_size=0, am=[], nodes=[], edgetab=[] ):
             # format: [Node-ID, Pointer, [Neighbor Node-IDs]]
             Paths.append([nnode_id, 0, NNodes])
             ptr = len(Paths) - 1
-            
+
             # Increment Pointer of Explored Node
             Paths[prev_ptr][1] += 1
-            
+
             if (len(Paths[ptr][2]) > 0) and ( prev_id in Paths[ptr][2] or Paths[ptr][2][0] == -1):
                 Paths[ptr][1] += 1
                 addr = 1

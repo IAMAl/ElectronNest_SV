@@ -19,8 +19,8 @@ open('utils/__init__.py', 'a').close()
 parser = argparse.ArgumentParser(description="args")
 
 parser.add_argument('--src_path',   help='source file path',    default='.')
-parser.add_argument('--w_path',     help='gened file path',     default='.')
 parser.add_argument('--src_name',   help='source file name',    required=True)
+parser.add_argument('--w_path',     help='gened file path',     default='.')
 
 args = parser.parse_args()
 
@@ -37,6 +37,7 @@ for func in prog.funcs:
     for bblock in func.bblocks:
         name_bblock = bblock.name.replace('\n', '')
         r_file_name = name_func+"_bblock_"+name_bblock
+        print(f"Processing: BBlock-{name_bblock}")
 
         am_size, am = amutils.Preprocess( r_file_path, r_file_name )
         NodeList = graphutils.ReadNodeList(r_file_name)
