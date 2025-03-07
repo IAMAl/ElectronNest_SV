@@ -126,7 +126,7 @@ module TokenUnit
 	assign O_RNo			= R_RNo;
 
 
-	// Pulse Nack-Bar Detection
+	//// Pulse Nack-Bar Detection
 	always_ff @( posedge clock ) begin
 		if ( reset ) begin
 			Pulse_Nack_Bar	<= 1'b0;
